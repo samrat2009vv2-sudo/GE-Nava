@@ -1454,27 +1454,28 @@
           joined: (extra && extra.joined) || (legacy.migratedProfile && legacy.migratedProfile.joined) || new Date().toISOString().slice(0, 10)
         };
 
-        // ---------- REFERRAL FRAUD গার্ড ----------
+        // ---------- REFERRAL ফ্রড গার্ড ----------
         // আগে নতুন একাউন্ট তৈরি হওয়ার সাথে সাথেই রেফারারকে বোনাস দেওয়া হতো — এই কারণে যে-কেউ
-        // শুধু একটা জাংক ইমেইল দিয়ে সাইন-আপ করেই (কোনো আসল অ্যাক্টিভিটি ছাড়াই) নিজেকে/বন্ধুকে
-        // রেফার করে বোনাস বানিয়ে ফেলতে পারতো। এখন থেকে দুই স্তরের চেক হয়:
-        //   ১) একই ডিভাইস (deviceId) থেকে যদি ইতিমধ্যে অন্য কোনো একাউন্ট খোলা থাকে (রেফারার নিজেই বা
-        //      অন্য কেউ), তাহলে এটাকে সন্দেহজনক ধরে নিয়ে রেফারেল সম্পূর্ণ বাতিল করা হয় (কোনো বোনাস না,
-        //      referredBy সেভও হয় না) — কারণ এটা প্রায় নিশ্চিতভাবেই নিজে নিজেকে রেফার করার চেষ্টা।
-        //   ২) ডিভাইস আলাদা হলেও বোনাস সাথে সাথে দেওয়া হয় না। referredBy শুধু "pending" হিসেবে সেভ
-        //      থাকে; নতুন ইউজার প্রথমবার একটা Ad পুরোপুরি দেখে সম্পূর্ণ করলে (finishAdWatch এ
-        //      confirmReferralIfPending() কল হয়) তখনই রেফারারকে বোনাস দেওয়া হয়। এতে খালি সাইন-আপ
-        //      করেই বোনাস বানানো বন্ধ হয়ে যায় — রেফার করা বন্ধুকে অন্তত একটা প্রকৃত কাজ করতে হবে।
+        // শুধু সাইন-আপ করেই (কোনো আসল অ্যাক্টিভিটি ছাড়াই) বোনাস বানিয়ে ফেলতে পারতো। এখন বোনাস সাথে
+        // সাথে দেওয়া হয় না — referredBy শুধু "pending" হিসেবে সেভ থাকে; নতুন ইউজার প্রথমবার একটা Ad
+        // পুরোপুরি দেখে সম্পূর্ণ করলে (finishAdWatch এ confirmReferralIfPending() কল হয়) তখনই
+        // রেফারারকে বোনাস দেওয়া হয়। এতে খালি সাইন-আপ করেই বোনাস বানানো বন্ধ হয়ে যায়।
+        //
+        // দ্রষ্টব্য: আগে এখানে একই deviceId থেকে রেফার করলে বোনাস পুরোপুরি ব্লক করে দেওয়া হতো,
+        // কিন্তু এতে পরিবারে শেয়ার করা ফোন/একই ফোনে টেস্টিং করলেও রেফার কাউন্ট বাড়ছিল না
+        // (false positive)। তাই এখন সেটা ব্লক না করে শুধু ফ্ল্যাগ করে রাখা হয় (suspiciousSameDevice),
+        // যাতে ভবিষ্যতে এডমিন প্যানেলে চাইলে এই তালিকা আলাদা করে রিভিউ করা যায় — কিন্তু বোনাস
+        // Ad-দেখা কনফার্মেশন সাপেক্ষে ঠিকই চলে।
         try {
           const refCode = sessionStorage.getItem('mahim_pending_ref');
           if (refCode) {
             const referrer = users.find(u => u.uid === refCode && u.id !== id);
-            const myDeviceId = user.deviceId;
-            const sameDeviceAlreadyUsed = users.some(u => u.deviceId && u.deviceId === myDeviceId);
-            if (referrer && sameDeviceAlreadyUsed) {
-              console.warn('সন্দেহজনক রেফারেল: একই ডিভাইসে আগে থেকেই একাউন্ট আছে, বোনাস দেওয়া হয়নি');
-              user.suspiciousSameDeviceReferral = true;
-            } else if (referrer) {
+            if (referrer) {
+              const myDeviceId = user.deviceId;
+              const sameDeviceAlreadyUsed = users.some(u => u.deviceId && u.deviceId === myDeviceId);
+              if (sameDeviceAlreadyUsed) {
+                user.suspiciousSameDevice = true; // শুধু নোট রাখা, বোনাস আটকানো হচ্ছে না
+              }
               user.referredBy = referrer.uid;
               user.referralConfirmed = false; // প্রথম Ad সম্পূর্ণ হলে তবেই বোনাস কনফার্ম হবে
             }
