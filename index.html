@@ -1118,10 +1118,60 @@
 </div>
 
 <!-- ====================== FIREBASE CONNECTION (ADDED) ====================== -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
+<!-- দ্রষ্টব্য: আগে এখানে সরাসরি www.gstatic.com থেকে ৪টা <script src> ট্যাগ দিয়ে Firebase SDK
+     লোড করা হতো। কিন্তু কিছু নেটওয়ার্ক/ISP/Telegram ইনঅ্যাপ ব্রাউজারে gstatic.com পুরোপুরি ব্লকড
+     থাকে, ফলে SDK কখনোই লোড হতো না ("firebase is not defined")। এখন একটা JS লোডার দিয়ে
+     একাধিক CDN (প্রথমে gstatic.com, না পেলে jsDelivr, তাও না পেলে unpkg) ক্রমান্বয়ে চেষ্টা করা হয়,
+     যাতে যেকোনো একটা CDN পৌঁছানো গেলেই অ্যাপ চলতে পারে।
+     Analytics SDK ইচ্ছাকৃতভাবে বাদ দেওয়া হয়েছে — Telegram-এর ইনঅ্যাপ WebView-তে এটা
+     "DataCloneError: Headers object could not be cloned" এরর ছোঁড়ে (Telegram WebView-এর
+     postMessage/structured-clone সাপোর্টের সীমাবদ্ধতার কারণে)। Analytics মূল অ্যাপ ফাংশনালিটির
+     (auth/database) জন্য জরুরি না, তাই এটা বাদ দিলে কোনো ক্ষতি নেই, বরং এই এররটা চলে যাবে। -->
+<script>
+(function () {
+  const FIREBASE_VERSION = '10.12.2';
+  const CDN_BASES = [
+    'https://www.gstatic.com/firebasejs/' + FIREBASE_VERSION + '/',
+    'https://cdn.jsdelivr.net/npm/firebase@' + FIREBASE_VERSION + '/',
+    'https://unpkg.com/firebase@' + FIREBASE_VERSION + '/'
+  ];
+  const SDK_FILES = [
+    'firebase-app-compat.js',
+    'firebase-auth-compat.js',
+    'firebase-database-compat.js'
+    // firebase-analytics-compat.js ইচ্ছাকৃতভাবে বাদ — উপরের নোট দেখুন
+  ];
+
+  function loadScript(url) {
+    return new Promise(function (resolve, reject) {
+      const s = document.createElement('script');
+      s.src = url;
+      s.onload = function () { resolve(url); };
+      s.onerror = function () { reject(new Error('load failed: ' + url)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  // একই ফাইলের জন্য CDN গুলো একে একে চেষ্টা করে, প্রথম যেটা সফল হয় সেটাই ব্যবহার হবে
+  function loadFromAnyCdn(fileName) {
+    return CDN_BASES.reduce(function (chain, base) {
+      return chain.catch(function () {
+        return loadScript(base + fileName);
+      });
+    }, Promise.reject(new Error('start')));
+  }
+
+  // ফাইলগুলো অবশ্যই এই ক্রমে লোড হতে হবে (app আগে, তারপর auth/database)
+  window.__mahimFirebaseSdkReady = SDK_FILES.reduce(function (chain, fileName) {
+    return chain.then(function () {
+      return loadFromAnyCdn(fileName).catch(function (err) {
+        console.error('Firebase SDK (' + fileName + ') কোনো CDN থেকেই লোড করা যায়নি:', err);
+        throw err;
+      });
+    });
+  }, Promise.resolve());
+})();
+</script>
 
 <script>
   const firebaseConfig = {
@@ -1134,12 +1184,103 @@
   appId: "1:457081461962:web:1b62e4b3a5003c6052a833"
 };
 
-  // Initialize Firebase
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-    firebase.analytics();
+  // ====================== SAFE FIREBASE INIT + ANONYMOUS AUTH (ADDED) ======================
+  // উপরের লোডার (window.__mahimFirebaseSdkReady) SDK ফাইলগুলো একাধিক CDN থেকে চেষ্টা করে
+  // লোড করার পরে resolve/reject হয়। সেটার জন্য অপেক্ষা করেই কেবল firebase.initializeApp() ও
+  // signInAnonymously() কল করা হয় — যাতে SDK লোড না হলে পুরো অ্যাপ ক্র্যাশ না করে বরং
+  // স্পষ্ট এরর লগ করে লোকাল-অনলি মোডে (রিয়েল-টাইম সিঙ্ক ছাড়া) চালু হয়।
+
+  // signInAnonymously() মাঝেমাঝে সাময়িক নেটওয়ার্ক গ্লিচের কারণে ব্যর্থ হতে পারে (বিশেষ করে
+  // মোবাইল নেটওয়ার্কে) — তাই এখানে অল্প কয়েকবার (৩ বার, ২ সেকেন্ড বিরতিতে) অটো-রিট্রাই করা হয়,
+  // এবং শেষ পর্যন্ত ব্যর্থ হলে এরর কোড অনুযায়ী স্পষ্ট, নির্দিষ্ট কারণ লগ করা হয়।
+  function signInAnonymouslyWithRetry(maxAttempts) {
+    let attempt = 0;
+    function tryOnce() {
+      attempt++;
+      return firebase.auth().signInAnonymously().catch((err) => {
+        if (attempt < maxAttempts) {
+          console.warn('Anonymous sign-in ব্যর্থ (চেষ্টা ' + attempt + '/' + maxAttempts + '), আবার চেষ্টা হচ্ছে...', err.code);
+          return new Promise((res) => setTimeout(res, 2000)).then(tryOnce);
+        }
+        if (err.code === 'auth/operation-not-allowed') {
+          console.error(
+            'Firebase anonymous sign-in ব্যর্থ: Anonymous প্রোভাইডার এখনো Enable করা নেই। ' +
+            'সমাধান: Firebase Console → Build → Authentication → Sign-in method → Anonymous → Enable করুন।'
+          );
+        } else if (err.code === 'auth/network-request-failed') {
+          console.error(
+            'Firebase anonymous sign-in ব্যর্থ (নেটওয়ার্ক): এই ডিভাইস/নেটওয়ার্ক থেকে Firebase Auth-এর ' +
+            'সার্ভারে (identitytoolkit.googleapis.com) পৌঁছানো যাচ্ছে না। এটা স্ট্যাটিক CDN না, তাই ' +
+            'মিরর CDN দিয়ে বাইপাস করা সম্ভব না। সমাধান: ভিন্ন নেটওয়ার্কে (মোবাইল ডেটা/ওয়াইফাই পাল্টে) ' +
+            'অথবা VPN দিয়ে টেস্ট করে দেখুন Google-এর সার্ভিস (googleapis.com) এই নেটওয়ার্ক থেকে ব্লকড কিনা।'
+          );
+        } else {
+          console.error('Firebase anonymous sign-in ব্যর্থ:', err.code || err.message, err);
+        }
+        throw err;
+      });
+    }
+    return tryOnce();
   }
-  console.log("Firebase Connected Successfully!");
+
+  window.mahimAuthReady = Promise.resolve(window.__mahimFirebaseSdkReady)
+    .then(function () {
+      if (typeof firebase === 'undefined') {
+        console.error(
+          'Firebase SDK কোনো CDN (gstatic.com / jsDelivr / unpkg) থেকেই লোড করা যায়নি। এই ডিভাইস/' +
+          'নেটওয়ার্ক থেকে এই ৩টা CDN-ই ব্লকড হতে পারে। সমাধান: Firebase SDK ফাইলগুলো ডাউনলোড করে ' +
+          'নিজের সার্ভারে self-host করে <script src> রিলেটিভ পাথ দিয়ে লোড করুন। আপাতত অ্যাপ লোকাল ' +
+          'ক্যাশ দিয়ে (রিয়েল-টাইম সিঙ্ক ছাড়া) চালু হবে।'
+        );
+        return null;
+      }
+
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        console.log("Firebase Connected Successfully!");
+      } catch (e) {
+        console.error('Firebase initializeApp ব্যর্থ:', e);
+        return null;
+      }
+
+      // Security Rules-এ (auth != null) দেওয়ার জন্য প্রতিটা ইউজারকে (এমনকি Telegram/গেস্ট
+      // ইউজারকেও) আসল Firebase Authentication দিয়ে সাইন-ইন থাকতে হবে।
+      return new Promise(function (resolve) {
+        try {
+          firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+              console.log("Firebase Auth Ready. UID:", user.uid);
+              resolve(user);
+            } else {
+              signInAnonymouslyWithRetry(3).catch(() => {
+                resolve(null); // Auth ব্যর্থ হলেও অ্যাপ যেন চিরকাল আটকে না থাকে
+              });
+              // signInAnonymously() সফল হলে onAuthStateChanged আবার ট্রিগার হয়ে উপরের if(user) শাখায় resolve হবে
+            }
+          });
+        } catch (e) {
+          console.error('Firebase Auth চালু করা যায়নি:', e);
+          resolve(null);
+        }
+      });
+    })
+    .catch(function (err) {
+      console.error('Firebase SDK লোড/init সম্পূর্ণ ব্যর্থ:', err);
+      return null;
+    });
+
+  // যেকোনো জায়গা থেকে সহজে বর্তমান Firebase Auth UID পাওয়ার হেল্পার (SDK লোড না হলে null রিটার্ন করে)
+  window.getFirebaseUid = function () {
+    try {
+      if (typeof firebase === 'undefined') return null;
+      const u = firebase.auth().currentUser;
+      return u ? u.uid : null;
+    } catch (e) {
+      return null;
+    }
+  };
 </script>
 <!-- ========================================================================= -->
 
@@ -1345,28 +1486,66 @@
       syncUsersToFirebase(list);
     }
 
-    // ---------- FIREBASE SYNC (users) ----------
-    // localStorage প্রতিটা ডিভাইস/ব্রাউজারে আলাদা থাকে, তাই আগে "Top Refers" লিস্ট
-    // শুধু নিজের ডিভাইসেই দেখা যেত, অন্য কারো ডিভাইসে অন্যদের ডেটা দেখা যেত না।
-    // এখন প্রতিটা ইউজারের নাম ও referralCount Firebase Realtime Database-এ সেভ হয়,
-    // যাতে সব ইউজার মিলিয়ে একটাই শেয়ার্ড লিডারবোর্ড দেখানো যায়।
-    function syncUsersToFirebase(list) {
+    // ---------- FIREBASE REAL-TIME SYNC (মাল্টি-ডিভাইস) ----------
+    // localStorage শুধু এই ডিভাইসের নিজস্ব cache হিসেবে কাজ করে (তাৎক্ষণিক UI রেন্ডারের জন্য)।
+    // Firebase Realtime Database হলো আসল/মাস্টার ডেটা — প্রতিটা ইউজারের সম্পূর্ণ রেকর্ড (ব্যালেন্স,
+    // পাসওয়ার্ড, রেফারেল, ইত্যাদি) এখন mahimUsers/{id} নোডে সেভ হয়, যাতে এডমিন প্যানেল যেকোনো
+    // ডিভাইস থেকে খুললেই সব ইউজারের আসল, সবশেষ ডেটা দেখতে পায়।
+    function fb() {
       try {
-        if (typeof firebase === 'undefined' || !firebase.apps || !firebase.apps.length) return;
+        if (typeof firebase === 'undefined' || !firebase.apps || !firebase.apps.length) return null;
+        return firebase.database();
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function syncUsersToFirebase(list) {
+      const db = fb();
+      if (!db) return;
+      try {
         const updates = {};
         (list || []).forEach(u => {
           if (!u || !u.id) return;
-          updates['mahimUsers/' + u.id] = {
-            name: u.name || 'User',
-            referralCount: Number(u.referralCount || 0)
-          };
+          updates['mahimUsers/' + u.id] = u;
         });
         if (Object.keys(updates).length === 0) return;
-        firebase.database().ref().update(updates).catch(err => {
-          console.warn('Firebase leaderboard sync failed (check database rules)', err);
+        db.ref().update(updates).catch(err => {
+          console.warn('Firebase users sync failed (check database rules)', err);
         });
       } catch (e) {
-        console.warn('Firebase leaderboard sync failed', e);
+        console.warn('Firebase users sync failed', e);
+      }
+    }
+
+    // withdraw রিকোয়েস্ট Firebase-এ পাঠায় (mahimWithdraws/{id}) — এডমিন প্যানেল অন্য ডিভাইস থেকেও
+    // ইউজারের জমা দেওয়া রিকোয়েস্ট সাথে সাথে দেখতে পাবে।
+    function syncWithdrawToFirebase(reqOrList) {
+      const db = fb();
+      if (!db) return;
+      try {
+        const list = Array.isArray(reqOrList) ? reqOrList : [reqOrList];
+        const updates = {};
+        list.forEach(w => { if (w && w.id) updates['mahimWithdraws/' + w.id] = w; });
+        if (Object.keys(updates).length === 0) return;
+        db.ref().update(updates).catch(err => console.warn('Firebase withdraw sync failed', err));
+      } catch (e) {
+        console.warn('Firebase withdraw sync failed', e);
+      }
+    }
+
+    // টাস্ক স্ক্রিনশট সাবমিশন Firebase-এ পাঠায় (mahimTaskSubmissions/{id})
+    function syncSubmissionToFirebase(subOrList) {
+      const db = fb();
+      if (!db) return;
+      try {
+        const list = Array.isArray(subOrList) ? subOrList : [subOrList];
+        const updates = {};
+        list.forEach(s => { if (s && s.id) updates['mahimTaskSubmissions/' + s.id] = s; });
+        if (Object.keys(updates).length === 0) return;
+        db.ref().update(updates).catch(err => console.warn('Firebase submission sync failed', err));
+      } catch (e) {
+        console.warn('Firebase submission sync failed', e);
       }
     }
 
@@ -1397,22 +1576,14 @@
     }
 
     // ---------- DEVICE FINGERPRINT (ফেক রেফার ঠেকানোর জন্য) ----------
-    // প্রতিটা ব্রাউজারে একবার একটা র‍্যান্ডম deviceId তৈরি হয়ে localStorage-এ সেভ থাকে।
-    // নতুন একাউন্ট তৈরি হওয়ার সময় এই deviceId ইউজারের সাথে সেভ করা হয়, যাতে বোঝা যায়
-    // একই ফোন/ব্রাউজার থেকে বারবার নতুন ইমেইল দিয়ে ভুয়া একাউন্ট খোলা হচ্ছে কিনা।
-    // দ্রষ্টব্য: ব্রাউজার ডেটা/ক্যাশ মুছে ফেললে বা অন্য ব্রাউজার/ইনকগনিটো ব্যবহার করলে এই আইডি
-    // পাল্টে যায় — তাই এটা সন্দেহজনক প্যাটার্ন ধরার একটা সহায়ক স্তর, ১০০% প্রুফ না।
+    // আগে প্রতিটা ব্রাউজারে একটা র‍্যান্ডম deviceId localStorage-এ জেনারেট করে সেভ রাখা হতো।
+    // এখন আসল Firebase Authentication চালু হওয়ায় প্রতিটা ডিভাইস/ব্রাউজারের নিজস্ব, আসল ও
+    // যাচাইযোগ্য একটা পরিচয় (Firebase Anonymous Auth UID) ইতিমধ্যেই আছে — তাই আলাদা করে
+    // localStorage-এ কোনো নিজস্ব র‍্যান্ডম আইডি বানানোর/সেভ করার দরকার নেই। এই ফাংশন এখন
+    // সরাসরি firebase.auth().currentUser.uid রিটার্ন করে (bootApp() Auth resolve হওয়ার
+    // পরেই কল হয়, তাই এই সময় uid সবসময় পাওয়া যাবে)।
     function getDeviceId() {
-      try {
-        let id = localStorage.getItem('mahim_device_id');
-        if (!id) {
-          id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
-          localStorage.setItem('mahim_device_id', id);
-        }
-        return id;
-      } catch (e) {
-        return 'dev_unknown';
-      }
+      return (window.getFirebaseUid && window.getFirebaseUid()) || 'dev_unknown';
     }
 
     // ইমেইলের প্রথম অংশ থেকে @username তৈরি করে (প্রোফাইল কার্ডে দেখানোর জন্য)
@@ -1492,9 +1663,12 @@
     }
 
     // ---------- REFERRAL বোনাস কনফার্মেশন (ফেক রেফার গার্ডের ২য় ধাপ) ----------
-    // referredBy সেভ থাকা একটা ইউজার প্রথমবার একটা Ad সম্পূর্ণ দেখলে (বাস্তব অ্যাক্টিভিটি প্রমাণ হলে)
-    // এই ফাংশন কল হয়ে রেফারারকে বোনাস দেয় এবং referralConfirmed = true করে দেয়, যাতে দ্বিতীয়বার
-    // একই রেফারেলের জন্য বোনাস দ্বিতীয়বার না যোগ হয়।
+    // আগে এটা প্রথম Ad সম্পূর্ণ দেখলেই কনফার্ম হতো, তারপর শুধু টাস্ক লিংক ওপেন/দেখলেই কনফার্ম হতো —
+    // দুটোই বাদ দেওয়া হয়েছে। এখন এটা সত্যিকারের "টাস্ক কমপ্লিট" এর উপর নির্ভরশীল: ১০টা টাস্কের
+    // মধ্যে যেকোনো একটা টাস্কের স্ক্রিনশট সাবমিশন এডমিন "approved" করলে (দেখুন
+    // processApprovedTaskSubmissions ফাংশন), তখনই এই ফাংশন কল হয়ে রেফারারকে বোনাস দেয় এবং
+    // referralConfirmed = true করে দেয়, যাতে দ্বিতীয়বার একই রেফারেলের জন্য বোনাস দ্বিতীয়বার
+    // যোগ না হয়।
     function confirmReferralIfPending() {
       try {
         const id = currentUserId();
@@ -1554,39 +1728,15 @@
     // আগে "Top Refers" কার্ডে সবসময় স্ট্যাটিক "এখনো কোনো রেফার নেই" টেক্সট দেখাত,
     // কোনো ইউজার কতজনকে রেফার করেছে তা কখনো দেখানো হতো না। এখন সব ইউজারকে
     // referralCount অনুযায়ী সাজিয়ে (বেশি থেকে কম) টপ ১০ জনকে নাম ও রেফার সংখ্যাসহ দেখায়।
+    // localStorage এখন Firebase realtime listener দিয়ে সবসময় সিঙ্কড থাকে (নিচে attachRealtimeListeners
+    // দেখুন), তাই লিডারবোর্ড এখন সরাসরি লোকাল ক্যাশ থেকেই রেন্ডার করা যায় — আলাদা করে Firebase-এ
+    // আবার fetch করার দরকার নেই, এতে ডুপ্লিকেট রিকোয়েস্ট কমে ও লোডিং আরও দ্রুত হয়।
     function renderLeaderboard() {
       const box = document.getElementById('leaderboardList');
       if (!box) return;
-
-      const renderFromLocal = () => {
-        let users = [];
-        try { users = getUsersStore(); } catch (e) { users = []; }
-        renderLeaderboardRows(users);
-      };
-
-      try {
-        if (typeof firebase === 'undefined' || !firebase.apps || !firebase.apps.length) {
-          renderFromLocal();
-          return;
-        }
-        box.style.textAlign = 'center';
-        box.style.color = '#888';
-        box.textContent = 'লোড হচ্ছে...';
-        firebase.database().ref('mahimUsers').once('value').then(snapshot => {
-          const val = snapshot.val() || {};
-          const users = Object.keys(val).map(id => ({
-            id: id,
-            name: val[id] && val[id].name,
-            referralCount: val[id] && val[id].referralCount
-          }));
-          renderLeaderboardRows(users);
-        }).catch(err => {
-          console.warn('Leaderboard fetch from Firebase failed, showing local data', err);
-          renderFromLocal();
-        });
-      } catch (e) {
-        renderFromLocal();
-      }
+      let users = [];
+      try { users = getUsersStore(); } catch (e) { users = []; }
+      renderLeaderboardRows(users);
     }
 
     function renderLeaderboardRows(users) {
@@ -1883,10 +2033,9 @@
       // Balance বাড়বে শুধুমাত্র পুরো সময় এড দেখা সম্পূর্ণ হওয়ার পরেই, অটোমেটিক ভাবে
       addToUserBalance(Number(reward));
 
-      // এই ইউজারকে যদি কেউ রেফার করে থাকে এবং সেই রেফারেল এখনো কনফার্ম না হয়ে থাকে,
-      // তাহলে এখনই কনফার্ম হবে (কারণ এইমাত্র প্রমাণ হলো ইউজারটা আসল/অ্যাক্টিভ) —
-      // এবং রেফারারকে তখনই বোনাস দেওয়া হবে, সাইন-আপের সময় না।
-      confirmReferralIfPending();
+      // নোট: আগে এখানে Ad দেখা সম্পূর্ণ হলেই রেফারেল কনফার্ম হয়ে যেত (confirmReferralIfPending)।
+      // এখন রেফারেল কনফার্মেশন আর Ad দেখার উপর নির্ভর করে না — ১০টা টাস্কের মধ্যে যেকোনো একটা
+      // টাস্ক এডমিন কর্তৃক অ্যাপ্রুভড/কমপ্লিট হলে কনফার্ম হয় (দেখুন processApprovedTaskSubmissions)।
 
       const overlay = document.getElementById('adWatchModalOverlay');
       if (overlay) overlay.classList.remove('show');
@@ -1896,7 +2045,44 @@
       showToast(`Ad Slot ${slotNumber} সম্পূর্ণ হয়েছে! +৳${Number(reward).toFixed(2)} যোগ হয়েছে`);
     }
 
+    // ---------- টাস্ক অ্যাপ্রুভ হলে অটোমেটিক টাকা পাওয়া ----------
+    // এডমিন প্যানেল থেকে যখন কোনো স্ক্রিনশট সাবমিশন "approved" করা হয়, তখন সেটা Realtime শোনা যায়
+    // (attachRealtimeListeners), কিন্তু আগে এই স্ট্যাটাস আপডেট হলেও ইউজারের ব্যালেন্সে টাকা যোগ হতো না।
+    // এই ফাংশন প্রতিবার সাবমিশন লিস্ট রিফ্রেশ হলে চেক করে — বর্তমান ইউজারের যেকোনো "approved" এবং
+    // এখনো টাকা না-দেওয়া (rewarded ফ্ল্যাগ ছাড়া) সাবমিশন থাকলে তার টাস্ক-রিওয়ার্ড ব্যালেন্সে যোগ করে
+    // এবং rewarded=true করে সেভ করে দেয়, যাতে দ্বিতীয়বার একই টাস্কের জন্য আবার টাকা যোগ না হয়।
+    // এভাবে যেকোনো একটা টাস্ক (১০টার মধ্যে যেকোনো একটা) সম্পূর্ণ/অ্যাপ্রুভ হলেই ইউজার টাকা পাবে,
+    // এবং সেটাই এখন রেফারেল কনফার্মেশনেরও (রেফারারকে বোনাস) আসল ট্রিগার — শুধু টাস্ক দেখাই যথেষ্ট নয়,
+    // টাস্কটা এডমিনের কাছে অ্যাপ্রুভড/কমপ্লিট হতে হবে।
+    function processApprovedTaskSubmissions() {
+      try {
+        const uid = currentUserId();
+        const submissions = getTaskSubmissions();
+        const myApprovedUnpaid = submissions.filter(s => s.userId === uid && s.status === 'approved' && !s.rewarded);
+        if (myApprovedUnpaid.length === 0) return;
+
+        myApprovedUnpaid.forEach(s => {
+          const amount = Number(s.reward || 0);
+          if (amount > 0) addToUserBalance(amount);
+          s.rewarded = true;
+          showToast(`"${s.taskTitle || 'টাস্ক'}" সম্পূর্ণ! +৳${amount.toFixed(2)} যোগ হয়েছে`);
+        });
+
+        localStorage.setItem('mahim_task_submissions', JSON.stringify(submissions));
+        syncSubmissionToFirebase(myApprovedUnpaid);
+
+        // যেকোনো একটা টাস্ক কমপ্লিট/অ্যাপ্রুভড হয়ে গেলে রেফারেল কনফার্ম করে রেফারারকে বোনাস দাও
+        confirmReferralIfPending();
+
+        renderBalance();
+        renderProfileHeader();
+      } catch (e) {
+        console.warn('Could not process approved task submissions', e);
+      }
+    }
+
     function renderTasks() {
+      processApprovedTaskSubmissions();
       const container = document.getElementById('taskListContainer');
       if (!container) return;
       const tasks = Array.isArray(adminConfig.tasks) ? adminConfig.tasks : [];
@@ -2031,7 +2217,7 @@
         const email = currentEmail();
         const user = findOrCreateUser(email);
         const submissions = getTaskSubmissions();
-        submissions.push({
+        const newSubmission = {
           id: 'ss' + Date.now(),
           userId: currentUserId(),
           userName: user.name || email,
@@ -2041,8 +2227,10 @@
           image: activeScreenshotDataUrl,
           status: 'pending',
           date: new Date().toISOString().slice(0,16).replace('T',' ')
-        });
+        };
+        submissions.push(newSubmission);
         localStorage.setItem('mahim_task_submissions', JSON.stringify(submissions));
+        syncSubmissionToFirebase(newSubmission);
       } catch (e) {
         console.warn('Could not save screenshot submission', e);
       }
@@ -2098,6 +2286,8 @@
       }
     }
 
+    // ---------- APP BOOT (Firebase হাইড্রেশন সম্পূর্ণ হওয়ার পরে চালানো হয়, নিচে hydrateAndStart দেখুন) ----------
+    function bootApp() {
     // Check if already signed in (sessionStorage)
     if (sessionStorage.getItem('mahim_logged_in') === 'true') {
       const savedEmail = sessionStorage.getItem('mahim_current_email');
@@ -2122,13 +2312,10 @@
       } else if (isInsideTelegram) {
         // Telegram Mini App-এর ভেতরেই খোলা হয়েছে, কিন্তু কোনো কারণে user info পাওয়া যায়নি।
         // এই ক্ষেত্রে আগে সবাইকে একই demo@mahim.com একাউন্টে ফেলে দেওয়া হতো (এটাই মূল বাগ) —
-        // এখন প্রতিটা ডিভাইসের জন্য আলাদা একটা guest id তৈরি/সংরক্ষণ করে রাখা হয় (localStorage-এ),
+        // এখন আলাদা করে localStorage-এ কোনো নিজস্ব র‍্যান্ডম guest id বানানো হয় না; তার বদলে
+        // আসল, স্থায়ী Firebase Anonymous Auth UID (auth.currentUser.uid) ব্যবহার করা হয়,
         // যাতে কেউ ভুলে একে অপরের একাউন্টে/নামে ঢুকে না যায়।
-        let guestId = localStorage.getItem('mahim_guest_id');
-        if (!guestId) {
-          guestId = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-          localStorage.setItem('mahim_guest_id', guestId);
-        }
+        const guestId = (window.getFirebaseUid && window.getFirebaseUid()) || ('g' + Date.now().toString(36));
         signInAsTelegramUser({ id: guestId, first_name: 'User ' + guestId.slice(-5) });
       } else {
         // Telegram-এর বাইরে (সাধারণ ব্রাউজার) খুললে আগের মতোই ডেমো একাউন্ট দিয়ে অটো সাইন-ইন হবে (টেস্টিং-এর জন্য)
@@ -2139,6 +2326,7 @@
         }, 1500);
       }
     }
+    } // bootApp() শেষ
 
     // Telegram থেকে পাওয়া real user info দিয়ে সাইন-ইন/একাউন্ট তৈরি করে (পাসওয়ার্ড ছাড়াই)
     function signInAsTelegramUser(tgUser) {
@@ -2301,6 +2489,7 @@
         };
         existing.push(newReq);
         localStorage.setItem('mahim_withdraws', JSON.stringify(existing));
+        syncWithdrawToFirebase(newReq);
       } catch (e) {
         console.warn('Could not save withdraw request', e);
       }
@@ -2355,6 +2544,7 @@
       });
       if (changed) {
         localStorage.setItem('mahim_withdraws', JSON.stringify(all));
+        syncWithdrawToFirebase(all.filter(w => w.userId === myId));
         showToast("একটি উইথড্র রিকোয়েস্ট রিজেক্ট হয়েছে, টাকা ব্যালেন্সে ফেরত দেওয়া হয়েছে");
       }
     }
@@ -2408,8 +2598,106 @@
       }, 3000);
     };
 
-    // Apply admin settings to the UI on load
-    applyAdminConfigToUI();
+    // ---------- FIREBASE হাইড্রেশন + রিয়েল-টাইম সিঙ্ক চালু করে অ্যাপ শুরু করে ----------
+    // অ্যাপ চালু হওয়ার সাথে সাথে সবার আগে Firebase (আসল/মাস্টার ডেটা) থেকে সবশেষ adminConfig,
+    // users, withdraws, submissions টেনে এনে এই ডিভাইসের localStorage cache আপডেট করা হয় —
+    // যাতে পুরনো/স্টেল লোকাল ডেটা দিয়ে ভুল ব্যালেন্স বা সেটিংস দেখানো না হয়। তারপরই সাইন-ইন/UI
+    // রেন্ডার শুরু হয়, এবং প্রতিটা নোডে রিয়েল-টাইম listener বসানো হয় যাতে ভবিষ্যতে এডমিন প্যানেল
+    // (বা অন্য কোনো ডিভাইস) থেকে কিছু পরিবর্তন হলে সাথে সাথেই এই অ্যাপেও রিফ্লেক্ট হয়, রিলোড ছাড়াই।
+    function hydrateAndStart() {
+      const db = fb();
+      if (!db) {
+        // Firebase আনরিচেবল হলেও অ্যাপ যেন আটকে না থাকে — লোকাল ক্যাশ দিয়েই চালু হবে
+        bootApp();
+        applyAdminConfigToUI();
+        return;
+      }
+      Promise.all([
+        db.ref('mahimAdminConfig').once('value').catch(() => null),
+        db.ref('mahimUsers').once('value').catch(() => null),
+        db.ref('mahimWithdraws').once('value').catch(() => null),
+        db.ref('mahimTaskSubmissions').once('value').catch(() => null)
+      ]).then(([configSnap, usersSnap, withdrawsSnap, subsSnap]) => {
+        if (configSnap && configSnap.exists()) {
+          adminConfig = Object.assign({}, defaultAdminConfig, configSnap.val());
+          localStorage.setItem('mahim_admin_config', JSON.stringify(adminConfig));
+        }
+        if (usersSnap && usersSnap.exists()) {
+          const val = usersSnap.val() || {};
+          const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
+          localStorage.setItem('mahim_users', JSON.stringify(arr));
+        }
+        if (withdrawsSnap && withdrawsSnap.exists()) {
+          const val = withdrawsSnap.val() || {};
+          const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
+          localStorage.setItem('mahim_withdraws', JSON.stringify(arr));
+        }
+        if (subsSnap && subsSnap.exists()) {
+          const val = subsSnap.val() || {};
+          const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
+          localStorage.setItem('mahim_task_submissions', JSON.stringify(arr));
+        }
+      }).catch(err => {
+        console.warn('Initial Firebase hydrate failed, using local cache', err);
+      }).finally(() => {
+        bootApp();
+        applyAdminConfigToUI();
+        attachRealtimeListeners();
+      });
+    }
+
+    // অন্য ডিভাইস/এডমিন প্যানেল থেকে কিছু পরিবর্তন হলেই সাথে সাথে এই অ্যাপে প্রতিফলিত হয়
+    function attachRealtimeListeners() {
+      const db = fb();
+      if (!db) return;
+
+      db.ref('mahimAdminConfig').on('value', snap => {
+        if (!snap.exists()) return;
+        adminConfig = Object.assign({}, defaultAdminConfig, snap.val());
+        localStorage.setItem('mahim_admin_config', JSON.stringify(adminConfig));
+        applyAdminConfigToUI(); // বোনাস/ফিচার টগল/টাস্ক/এড লিংক ইত্যাদি সাথে সাথে আপডেট হবে
+      });
+
+      db.ref('mahimUsers').on('value', snap => {
+        const val = snap.val() || {};
+        const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
+        localStorage.setItem('mahim_users', JSON.stringify(arr));
+        // ব্যালেন্স/রেফারেল কাউন্ট/লিডারবোর্ড সাথে সাথে রিফ্রেশ (এডমিন ব্যালেন্স এড/কাট করলে এখানেই দেখা যাবে)
+        renderBalance();
+        renderProfileHeader();
+        renderReferralInfo();
+      });
+
+      db.ref('mahimWithdraws').on('value', snap => {
+        const val = snap.val() || {};
+        const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
+        localStorage.setItem('mahim_withdraws', JSON.stringify(arr));
+        // এডমিন যদি এইমাত্র রিজেক্ট/এপ্রুভ করে থাকে, রিফান্ড রিকনসাইল ও হিস্ট্রি সাথে সাথে আপডেট হবে
+        reconcileWithdrawRefunds();
+        renderWithdrawHistory();
+      });
+
+      db.ref('mahimTaskSubmissions').on('value', snap => {
+        const val = snap.val() || {};
+        const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
+        localStorage.setItem('mahim_task_submissions', JSON.stringify(arr));
+        renderTasks(); // এডমিন এপ্রুভ/রিজেক্ট করলে টাস্ক লিস্টের স্ট্যাটাস সাথে সাথে বদলে যাবে
+      });
+    }
+
+    // ---------- অ্যাপ শুরু করার আগে Firebase Auth resolve হওয়ার জন্য অপেক্ষা করা ----------
+    // Security Rules-এ (auth != null) প্রয়োগ থাকায়, auth.currentUser নিশ্চিত হওয়ার আগে
+    // কোনো ডেটাবেস রিড/রাইট করা হলে তা রিজেক্ট হয়ে যাবে। তাই এখানে window.mahimAuthReady
+    // প্রমিজ resolve হওয়া পর্যন্ত অপেক্ষা করা হয় (উপরের FIREBASE ANONYMOUS AUTH ব্লক দেখুন),
+    // তারপরই hydrateAndStart() কল হয় যেটা bootApp() ও attachRealtimeListeners() চালায়।
+    if (window.mahimAuthReady && typeof window.mahimAuthReady.then === 'function') {
+      window.mahimAuthReady.then(() => {
+        hydrateAndStart();
+      });
+    } else {
+      // ফলব্যাক (অস্বাভাবিক পরিস্থিতি) — তবুও অ্যাপ যেন আটকে না থাকে
+      hydrateAndStart();
+    }
   })();
 </script>
 </body>
