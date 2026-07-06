@@ -3,22 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Mahim Admin Panel</title>
+  <title>Mahim - Sign In</title>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --admin-bg: #f0f2f5;
-      --sidebar-bg: #1e1e2d;
-      --primary: #e52d87;
-      --primary-dark: #c0246e;
-      --card-bg: #ffffff;
-      --text: #2d2d2d;
-      --muted: #777;
-      --border: #e4e8ec;
-      --success: #10b981;
-      --danger: #ef4444;
-      --warning: #f59e0b;
+      --primary-bg: #f4f6f9;
+      --theme-gradient: linear-gradient(135deg, #e52d87 0%, #ff5e3a 100%);
+      --btn-gradient: linear-gradient(to right, #ff416c, #ff4b2b);
+      --task-btn-gradient: linear-gradient(to right, #00b4db, #0083b0);
+      --text-dark: #1e1e1e;
+      --text-muted: #666;
+      --white: #ffffff;
+      --card-shadow: 0 8px 20px rgba(0,0,0,0.06);
+      --input-bg: #f2f4f8;
     }
 
     * {
@@ -26,620 +25,1156 @@
       padding: 0;
       box-sizing: border-box;
       font-family: 'Hind Siliguri', sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      background: var(--admin-bg);
+      background: #dce3eb;
       display: flex;
+      justify-content: center;
+      align-items: center;
       min-height: 100vh;
+      padding: 0;
+      margin: 0;
     }
 
-    .sidebar {
-      width: 260px;
-      background: var(--sidebar-bg);
-      color: #ccc;
-      padding: 25px 15px;
-      display: flex;
-      flex-direction: column;
-      gap: 25px;
-      position: fixed;
-      height: 100vh;
-      left: 0;
-      top: 0;
-      z-index: 10;
-      transition: 0.3s;
-      overflow-y: auto;
-    }
-
-    .sidebar-logo {
-      font-size: 1.7rem;
-      font-weight: 700;
-      color: white;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding-left: 8px;
-    }
-    .sidebar-logo i {
-      color: var(--primary);
-    }
-    .nav-menu {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .nav-menu li a {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 15px;
-      border-radius: 12px;
-      color: #b0b0c0;
-      text-decoration: none;
-      font-weight: 500;
-      transition: 0.2s;
-      position: relative;
-    }
-    .nav-menu li a.active,
-    .nav-menu li a:hover {
-      background: rgba(229, 45, 135, 0.15);
-      color: white;
-      font-weight: 600;
-    }
-    .nav-menu li a i {
-      width: 20px;
-      font-size: 1.1rem;
-    }
-    .nav-badge {
-      position: absolute;
-      right: 12px;
-      background: var(--danger);
-      color: white;
-      font-size: 0.7rem;
-      padding: 2px 7px;
-      border-radius: 10px;
-      font-weight: 700;
-    }
-
-    .main-content {
-      margin-left: 260px;
-      flex: 1;
-      padding: 20px 25px;
+    /* Mobile App Container */
+    .app-container {
       width: 100%;
-    }
-
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 25px;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .page-title {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-    .admin-badge {
-      background: var(--primary);
-      color: white;
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 20px;
-      padding: 22px;
-      box-shadow: 0 5px 18px rgba(0,0,0,0.04);
-      margin-bottom: 20px;
-    }
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .section-header h3 {
-      font-size: 1.2rem;
-      color: #222;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-    }
-    .form-group {
+      max-width: 100%;
+      background-color: var(--primary-bg);
+      height: 100vh;
+      position: relative;
+      box-shadow: none;
+      border-radius: 0;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-    }
-    .form-group label {
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #444;
-    }
-    .form-control {
-      padding: 12px 15px;
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      font-size: 0.95rem;
-      background: #fafbfc;
-      outline: none;
-      transition: 0.2s;
-    }
-    .form-control:focus {
-      border-color: var(--primary);
-      background: white;
-    }
-    textarea.form-control {
-      resize: vertical;
-      min-height: 80px;
-    }
-    .btn {
-      padding: 11px 22px;
-      border-radius: 30px;
-      border: none;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 0.95rem;
-      transition: 0.2s;
-    }
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-      box-shadow: 0 4px 12px rgba(229,45,135,0.3);
-    }
-    .btn-primary:hover {
-      background: var(--primary-dark);
-    }
-    .btn-outline {
-      background: white;
-      border: 1.5px solid var(--border);
-      color: #444;
-    }
-    .btn-sm {
-      padding: 6px 14px;
-      font-size: 0.8rem;
-    }
-    .btn-danger {
-      background: var(--danger);
-      color: white;
-    }
-    .btn-success {
-      background: var(--success);
-      color: white;
     }
 
-    .preview-box {
-      background: #f5f5f5;
-      border-radius: 16px;
-      padding: 15px;
-      text-align: center;
-      margin-top: 12px;
+    /* ---------- SIGN IN SCREEN ---------- */
+    .auth-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-bg);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 25px;
+      transition: all 0.35s ease;
+      pointer-events: auto;
+      backdrop-filter: blur(2px);
     }
-    .preview-box img {
-      max-width: 120px;
-      border-radius: 12px;
+
+    .auth-screen.hidden-auth {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: scale(0.96);
+    }
+
+    .auth-card {
+      width: 100%;
+      background: white;
+      border-radius: 28px;
+      padding: 30px 20px;
+      box-shadow: 0 20px 35px rgba(233, 30, 99, 0.12);
+      text-align: center;
+    }
+
+    .auth-logo {
+      font-size: 3.2rem;
+      background: var(--theme-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       margin-bottom: 8px;
     }
 
-    .toggle-switch {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .switch {
-      position: relative;
-      width: 46px;
-      height: 24px;
-    }
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #ccc;
-      border-radius: 24px;
-      transition: .3s;
-    }
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      border-radius: 50%;
-      transition: .3s;
-    }
-    input:checked + .slider {
-      background-color: var(--primary);
-    }
-    input:checked + .slider:before {
-      transform: translateX(22px);
+    .auth-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #1e1e1e;
+      margin-bottom: 5px;
     }
 
-    .link-list {
-      list-style: none;
-      margin-top: 10px;
+    .auth-sub {
+      color: #666;
+      font-size: 0.95rem;
+      margin-bottom: 25px;
     }
-    .link-list li {
+
+    .input-wrapper {
+      text-align: left;
+      margin-bottom: 18px;
+    }
+
+    .input-wrapper label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #2d2d2d;
+      display: block;
+      margin-bottom: 6px;
+      margin-left: 5px;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 14px 16px;
+      background: #f5f7fa;
+      border: 1.5px solid #e4e9f0;
+      border-radius: 16px;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    .input-field:focus {
+      border-color: #e52d87;
+      background: white;
+    }
+
+    .btn-signin {
+      width: 100%;
+      background: var(--btn-gradient);
+      border: none;
+      color: white;
+      padding: 15px;
+      border-radius: 30px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 15px;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(255, 65, 108, 0.4);
+      transition: 0.2s;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-signin:active {
+      transform: scale(0.97);
+    }
+
+    .auth-error {
+      color: #d32f2f;
+      font-size: 0.85rem;
+      margin-top: 12px;
+      min-height: 20px;
+    }
+
+    .demo-hint {
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .demo-hint span {
+      background: #f0f0f0;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      color: #e52d87;
+    }
+
+    /* ---------- LOADING SCREEN (replaces email/password sign-in) ---------- */
+    .loading-spinner {
+      width: 46px;
+      height: 46px;
+      margin: 10px auto 22px;
+      border-radius: 50%;
+      border: 4px solid #f0d3de;
+      border-top-color: #e52d87;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: #666;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    /* ---------- MAIN APP (hidden during auth) ---------- */
+    .app-main-wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      flex: 1;
+    }
+
+    .header {
+      background: var(--theme-gradient);
+      color: var(--white);
+      padding: 15px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 10px;
-      background: #f9f9fb;
-      border-radius: 10px;
-      margin-bottom: 6px;
-      gap: 10px;
+      border-bottom-left-radius: 24px;
+      border-bottom-right-radius: 24px;
+      padding-bottom: 45px;
     }
-    .link-list li span {
+
+    .header h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .main-content {
+      padding: 0 16px;
+      padding-bottom: 80px;
+      margin-top: -35px;
       flex: 1;
-      word-break: break-all;
-      font-size: 0.9rem;
+      overflow-y: auto;
     }
 
-    .ad-slots-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 25px;
+    .tab-section {
+      display: none;
+      animation: fadeIn 0.3s ease;
     }
 
-    .toast-admin {
-      position: fixed;
-      bottom: 25px;
-      right: 25px;
-      background: #1e1e2d;
-      color: white;
-      padding: 14px 22px;
-      border-radius: 12px;
-      font-weight: 500;
-      z-index: 999;
-      opacity: 0;
-      transition: 0.3s;
-    }
-    .toast-admin.show {
-      opacity: 1;
+    .tab-section.active {
+      display: block;
     }
 
-    /* ---- Withdraw / Users section ---- */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 20px;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .stat-box {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 5px 18px rgba(0,0,0,0.04);
+
+    .card {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: var(--card-shadow);
+    }
+
+    .balance-card {
       text-align: center;
     }
-    .stat-box .num {
-      font-size: 1.5rem;
+    .balance-card .title {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+    .balance-card .amount {
+      color: #c62828;
+      font-size: 2.3rem;
       font-weight: 700;
-      color: var(--primary);
+      margin-bottom: 12px;
     }
-    .stat-box .lbl {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-top: 4px;
+    .balance-card .amount span {
+      font-size: 0.9rem;
+      color: #444;
     }
-
-    .filter-tabs {
+    .stats-grid {
       display: flex;
-      gap: 8px;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
+      border-top: 1px dashed #ddd;
+      padding-top: 14px;
     }
-    .filter-tab {
-      padding: 8px 16px;
-      border-radius: 20px;
-      background: #f1f1f4;
-      color: #555;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
+    .stat-item {
+      flex: 1;
     }
-    .filter-tab.active {
-      background: var(--primary);
-      color: white;
+    .stat-item:first-child {
+      border-right: 1px dashed #ddd;
+    }
+    .stat-item h4 {
+      color: #e91e63;
+      font-size: 1.3rem;
+    }
+    .stat-item p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
     }
 
-    .req-table-wrap {
-      overflow-x: auto;
+    /* ---------- PROFILE CARD (name / username / UID / balance) ---------- */
+    .profile-card {
+      background: linear-gradient(135deg, #0e9e6d 0%, #22c55e 100%);
+      border-radius: 24px;
+      padding: 18px 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 12px 24px rgba(14, 158, 109, 0.28);
     }
-    table.req-table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 720px;
+    .profile-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    table.req-table th {
-      text-align: left;
-      font-size: 0.8rem;
-      color: var(--muted);
-      padding: 10px 12px;
-      border-bottom: 2px solid var(--border);
+    .profile-avatar-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .profile-avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.18);
+      border: 2px solid rgba(255, 255, 255, 0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .online-dot {
+      position: absolute;
+      bottom: 1px;
+      right: 1px;
+      width: 12px;
+      height: 12px;
+      background: #4ade80;
+      border: 2px solid #fff;
+      border-radius: 50%;
+    }
+    .profile-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .profile-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.05rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .verified-badge {
+      color: #fff;
+      font-size: 0.85rem;
+      opacity: 0.9;
+      flex-shrink: 0;
+    }
+    .profile-handle, .profile-uid {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 0.78rem;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .balance-pill {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      padding: 8px 14px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .balance-pill-label {
+      display: block;
+      font-size: 0.6rem;
+      letter-spacing: 0.5px;
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .balance-pill-amount {
+      display: block;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.05rem;
       white-space: nowrap;
     }
-    table.req-table td {
-      padding: 12px;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.9rem;
-      vertical-align: middle;
-    }
-    table.req-table tr:hover td {
-      background: #fafbfc;
-    }
-    .status-pill {
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      display: inline-block;
-    }
-    .status-pending { background: rgba(245,158,11,0.15); color: var(--warning); }
-    .status-approved { background: rgba(16,185,129,0.15); color: var(--success); }
-    .status-rejected { background: rgba(239,68,68,0.15); color: var(--danger); }
 
-    .user-mini {
+    .quick-stats-grid {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .quick-stat-card {
+      flex: 1;
+      text-align: center;
+      padding: 16px 10px;
+    }
+    .quick-stat-icon {
+      width: 42px;
+      height: 42px;
+      margin: 0 auto 8px;
+      border-radius: 50%;
+      background: #e6f7ef;
+      color: #16a34a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+    }
+    .quick-stat-label {
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .quick-stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 16px 0 10px;
+      color: var(--text-dark);
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .user-avatar {
-      width: 32px;
-      height: 32px;
+
+    /* ---------- LEADERBOARD (Top Refers) ---------- */
+    .leaderboard-podium {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 4px 4px;
+      margin-bottom: 14px;
+    }
+    .podium-item {
+      flex: 1;
+      max-width: 130px;
+      text-align: center;
+    }
+    .podium-avatar {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 8px;
       border-radius: 50%;
-      background: var(--primary);
-      color: white;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 0.8rem;
+      font-size: 1.3rem;
+      color: white;
+      border: 3px solid white;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    }
+    .podium-item.rank-1 .podium-avatar {
+      width: 80px;
+      height: 80px;
+      font-size: 1.6rem;
+      border-color: #ffd700;
+      box-shadow: 0 6px 16px rgba(255,193,7,0.4);
+    }
+    .podium-item.rank-2 .podium-avatar { border-color: #c0c0c0; }
+    .podium-item.rank-3 .podium-avatar { border-color: #cd7f32; }
+    .podium-crown {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.3rem;
+    }
+    .podium-crown.gold { color: #ffc107; }
+    .podium-crown.silver { color: #b0bec5; }
+    .podium-crown.bronze { color: #cd7f32; }
+    .podium-name {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-dark);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .podium-badge {
+      display: inline-block;
+      margin-top: 4px;
+      background: var(--theme-gradient);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .leaderboard-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 2px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .leaderboard-row:last-child {
+      border-bottom: none;
+    }
+    .lb-rank {
+      width: 28px;
+      font-weight: 700;
+      color: #999;
+      font-size: 0.9rem;
+    }
+    .lb-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 0.85rem;
       flex-shrink: 0;
     }
-    .action-btns {
-      display: flex;
-      gap: 6px;
+    .lb-info {
+      flex: 1;
+      min-width: 0;
     }
-    .empty-state {
-      text-align: center;
-      padding: 40px 10px;
-      color: var(--muted);
+    .lb-name {
+      font-weight: 600;
+      font-size: 0.92rem;
+      color: var(--text-dark);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .empty-state i {
-      font-size: 2.5rem;
-      margin-bottom: 10px;
-      opacity: 0.4;
+    .lb-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .lb-amount {
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: #2e7d32;
+      flex-shrink: 0;
     }
 
-    .modal-overlay {
+    .task-item {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--card-shadow);
+    }
+    .task-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .task-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: #e3f2fd;
+      color: #1976d2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.2rem;
+      overflow: hidden;
+    }
+    .task-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .task-details h4 {
+      font-size: 0.95rem;
+      color: var(--text-dark);
+    }
+    .task-details p {
+      color: #2e7d32;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .btn-task {
+      background: var(--task-btn-gradient);
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 24px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .task-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-end;
+    }
+    .btn-ss {
+      background: #fff3e0;
+      color: #e65100;
+      border: 1px solid #ffcc80;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .ss-pill {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 14px;
+    }
+    .ss-pill.pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .ss-pill.approved { background: rgba(16,185,129,0.15); color: #10b981; }
+    .ss-pill.rejected { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+    .form-control {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #e0e0e0;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      background: #fafafa;
+      outline: none;
+    }
+    .btn-primary {
+      width: 100%;
+      background: var(--btn-gradient);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .refer-box i {
+      font-size: 3.5rem;
+      color: #ff9800;
+    }
+    .refer-link-container {
+      display: flex;
+      margin-top: 15px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .refer-link-container input {
+      flex: 1;
+      border: none;
+      padding: 12px;
+      outline: none;
+      color: #c62828;
+    }
+    .btn-copy {
+      background: #d81b60;
+      color: white;
+      border: none;
+      padding: 0 18px;
+      cursor: pointer;
+    }
+
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: var(--white);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      box-shadow: 0 -4px 15px rgba(0,0,0,0.04);
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+    }
+    .nav-item {
+      text-align: center;
+      color: #888;
+      font-size: 0.95rem;
+      cursor: pointer;
+      flex: 1;
+      transition: 0.2s;
+    }
+    .nav-item i {
+      font-size: 1.9rem;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .nav-item.active {
+      color: #e52d87;
+      font-weight: 600;
+    }
+
+    #toast {
+      visibility: hidden;
+      min-width: 220px;
+      background: #1e1e1e;
+      color: white;
+      text-align: center;
+      border-radius: 30px;
+      padding: 12px 20px;
+      position: fixed;
+      z-index: 200;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.9rem;
+    }
+    #toast.show {
+      visibility: visible;
+      animation: fadein 0.4s, fadeout 0.5s 2.4s;
+    }
+    @keyframes fadeout {
+      from {opacity: 1;} to {opacity: 0;}
+    }
+
+    /* ---------- SCREENSHOT SUBMIT MODAL ---------- */
+    .ss-modal-overlay {
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.5);
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 1000;
-      padding: 15px;
+      z-index: 300;
+      padding: 20px;
     }
-    .modal-overlay.show { display: flex; }
-    .modal-box {
+    .ss-modal-overlay.show { display: flex; }
+    .ss-modal-box {
       background: white;
-      border-radius: 18px;
+      border-radius: 22px;
       padding: 22px;
-      max-width: 420px;
+      max-width: 360px;
       width: 100%;
     }
-    .modal-box h4 {
-      margin-bottom: 14px;
+    .ss-modal-box h4 {
       font-size: 1.1rem;
+      margin-bottom: 6px;
+      color: var(--text-dark);
     }
-    .modal-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.9rem;
+    .ss-modal-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
     }
-    .modal-actions {
+    .ss-file-input {
+      width: 100%;
+      padding: 10px;
+      border: 1.5px dashed #e4e9f0;
+      border-radius: 14px;
+      font-size: 0.85rem;
+      background: #f5f7fa;
+    }
+    .ss-preview-box {
+      margin-top: 12px;
+      text-align: center;
+    }
+    .ss-preview-box img {
+      max-width: 100%;
+      max-height: 180px;
+      border-radius: 14px;
+    }
+    .ss-modal-actions {
       display: flex;
       gap: 10px;
       margin-top: 18px;
     }
-    .modal-actions .btn { flex: 1; }
-
-    .history-list { margin-top: 10px; }
-    .history-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 12px;
-      background: #f9f9fb;
-      border-radius: 10px;
-      margin-bottom: 8px;
-      font-size: 0.85rem;
-    }
-
-    /* ---- Task Screenshot Submissions ---- */
-    .ss-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 16px;
-    }
-    .ss-card {
-      background: #f9f9fb;
-      border-radius: 16px;
-      padding: 14px;
-    }
-    .ss-card img {
-      width: 100%;
-      height: 160px;
-      object-fit: cover;
-      border-radius: 12px;
-      cursor: pointer;
-      margin-bottom: 10px;
-      background: #eee;
-    }
-    .ss-card-title {
-      font-weight: 600;
-      font-size: 0.9rem;
-      margin-bottom: 2px;
-    }
-    .ss-card-meta {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-    .ss-fullview-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.75);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1500;
-      padding: 20px;
-    }
-    .ss-fullview-overlay.show { display: flex; }
-    .ss-fullview-overlay img {
-      max-width: 100%;
-      max-height: 85vh;
-      border-radius: 14px;
-    }
-
-    /* ---- Login screen ---- */
-    .login-overlay {
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(135deg, #1e1e2d 0%, #2d1b33 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      padding: 20px;
-    }
-    .login-box {
-      background: white;
-      border-radius: 20px;
-      padding: 35px 30px;
-      max-width: 380px;
-      width: 100%;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-    }
-    .login-logo {
+    .ss-modal-actions .btn-task {
+      flex: 1;
       text-align: center;
-      margin-bottom: 22px;
     }
-    .login-logo i {
-      font-size: 2.5rem;
-      color: var(--primary);
+
+    /* ---------- AD WATCH MODAL ---------- */
+    .aw-modal-box {
+      background: white;
+      border-radius: 22px;
+      padding: 24px;
+      max-width: 340px;
+      width: 100%;
+      text-align: center;
     }
-    .login-logo h2 {
-      margin-top: 10px;
-      font-size: 1.3rem;
-      color: var(--text);
+    .aw-modal-box h4 {
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+      color: var(--text-dark);
     }
-    .login-logo p {
-      font-size: 0.85rem;
-      color: var(--muted);
+    .aw-modal-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+    .aw-ring-wrap {
+      position: relative;
+      width: 130px;
+      height: 130px;
+      margin: 0 auto 16px;
+    }
+    .aw-ring-wrap svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+    .aw-ring-bg {
+      fill: none;
+      stroke: #eef0f4;
+      stroke-width: 10;
+    }
+    .aw-ring-fg {
+      fill: none;
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke: url(#awGradient);
+      transition: stroke-dashoffset 1s linear;
+    }
+    .aw-ring-count {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: #1e1e1e;
+    }
+    .aw-modal-note {
+      font-size: 0.78rem;
+      color: #999;
       margin-top: 4px;
     }
-    .login-form .form-group {
-      margin-bottom: 16px;
-    }
-    .login-form .form-group label {
-      font-size: 0.85rem;
-      margin-bottom: 6px;
-      display: block;
-      color: #444;
-      font-weight: 600;
-    }
-    .password-wrap {
-      position: relative;
-    }
-    .password-wrap .toggle-eye {
-      position: absolute;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
-      color: var(--muted);
-    }
-    .login-error {
-      background: rgba(239,68,68,0.1);
-      color: var(--danger);
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      margin-bottom: 14px;
-      display: none;
-    }
-    .login-error.show { display: block; }
-    .login-form .btn-primary {
-      width: 100%;
-      padding: 13px;
-      margin-top: 6px;
-    }
-    body.locked .sidebar,
-    body.locked .main-content {
-      display: none;
-    }
-    .logout-link {
-      margin-top: auto;
-    }
-    .logout-link a {
-      color: #ff8fb8 !important;
-    }
 
-    @media (max-width: 768px) {
-      .sidebar {
-        width: 70px;
-        padding: 20px 8px;
-      }
-      .sidebar-logo span,
-      .nav-menu li a span {
-        display: none;
-      }
-      .nav-badge { right: 4px; top: 4px; }
-      .main-content {
-        margin-left: 70px;
-      }
-      .form-grid, .ad-slots-grid {
-        grid-template-columns: 1fr;
-      }
-      .stats-row {
-        grid-template-columns: repeat(2, 1fr);
-      }
+    /* ---------- TASK VIEW MODAL ---------- */
+    .tv-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      padding: 20px;
+    }
+    .tv-modal-overlay.show { display: flex; }
+    .tv-modal-box {
+      background: white;
+      border-radius: 22px;
+      padding: 22px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+    }
+    .tv-modal-box h4 {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      color: var(--text-dark);
+    }
+    .tv-modal-image-box {
+      background: #f5f7fa;
+      border-radius: 16px;
+      padding: 10px;
+      margin-bottom: 14px;
+      min-height: 60px;
+    }
+    .tv-modal-image-box img {
+      max-width: 100%;
+      max-height: 220px;
+      border-radius: 12px;
+    }
+    .tv-modal-reward {
+      color: #2e7d32;
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+    .tv-modal-link {
+      display: block;
+      background: #f5f7fa;
+      border: 1.5px solid #e4e9f0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+      color: #1976d2;
+      word-break: break-all;
+      margin-bottom: 16px;
+      text-decoration: none;
+    }
+    .tv-modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .tv-modal-actions .btn-task {
+      flex: 1;
+      text-align: center;
     }
   </style>
+</head>
+<body>
+<div class="app-container" id="appContainer">
+  <!-- SIGN IN SCREEN -->
+  <div class="auth-screen" id="authScreen">
+    <div class="auth-card" id="loginCard">
+      <div class="auth-logo"></div>
+      <div class="auth-title" id="authTitle">Mahim</div>
+      <div class="auth-sub">অ্যাপ লোড হচ্ছে, একটু অপেক্ষা করুন...</div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+      <div class="loading-spinner"></div>
+      <div class="loading-text">লোড হচ্ছে...</div>
 
-  <script>
-    const firebaseConfig = {
+      <!-- hidden, kept only so existing sign-in/registration logic keeps working -->
+      <input type="email" class="input-field" id="emailInput" style="display:none" autocomplete="email">
+      <input type="password" class="input-field" id="passwordInput" style="display:none" autocomplete="current-password">
+      <button class="btn-signin" id="signInButton" style="display:none"></button>
+      <div class="auth-error" id="authError" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- FORCE CHANNEL JOIN GATE: shown after sign-in if admin has enabled "Force Channel Join" -->
+  <div class="ss-modal-overlay" id="channelGateModalOverlay">
+    <div class="ss-modal-box" style="text-align:center;">
+      <i class="fa-brands fa-telegram" style="font-size:2.4rem; color:#0088cc; margin-bottom:10px;"></i>
+      <h4 style="margin-bottom:8px;">চ্যানেলে জয়েন করুন</h4>
+      <p style="font-size:0.9rem; color:#444; margin-bottom:18px;">এই অ্যাপ ব্যবহার করতে হলে আগে আমাদের অফিসিয়াল চ্যানেলে জয়েন করতে হবে।</p>
+      <button class="btn-primary" style="background:#0088cc; margin-bottom:10px;" onclick="openChannelGateLink()"><i class="fa-brands fa-telegram"></i> চ্যানেলে জয়েন করুন</button>
+      <button class="btn-primary" onclick="confirmChannelJoined()">✅ জয়েন করেছি, চালিয়ে যান</button>
+    </div>
+  </div>
+
+  <!-- MAIN APP (visible after sign in) -->
+  <div class="app-main-wrapper" id="appMainWrapper">
+    <header class="header">
+      <h2 id="headerAppName"> Mahim </h2>
+      <i class="fa-solid fa-ellipsis-vertical" style="font-size: 1.2rem;"></i>
+    </header>
+
+    <main class="main-content">
+      <section id="tab-home" class="tab-section active">
+        <div class="profile-card">
+          <div class="profile-top">
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar" id="profileAvatar">?</div>
+              <span class="online-dot"></span>
+            </div>
+            <div class="profile-info">
+              <div class="profile-name-row">
+                <span id="profileName">Guest</span>
+                <i class="fa-solid fa-circle-check verified-badge" title="Verified"></i>
+              </div>
+              <p class="profile-handle" id="profileHandle">@guest</p>
+              <p class="profile-uid">UID: <span id="profileUid">-</span></p>
+            </div>
+            <div class="balance-pill">
+              <span class="balance-pill-label">BALANCE</span>
+              <span class="balance-pill-amount">৳<span id="balanceAmount">0.00</span><span id="balanceCurrency" style="display:none;"></span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-stats-grid">
+          <div class="card quick-stat-card">
+            <div class="quick-stat-icon"><i class="fa-solid fa-paper-plane"></i></div>
+            <p class="quick-stat-label">WITHDRAW</p>
+            <h3 class="quick-stat-value">৳<span id="withdrawStatAmount">0.00</span></h3>
+          </div>
+          <div class="card quick-stat-card">
+            <div class="quick-stat-icon"><i class="fa-solid fa-user-group"></i></div>
+            <p class="quick-stat-label">REFERRALS</p>
+            <h3 class="quick-stat-value" id="referStatAmount">0</h3>
+          </div>
+        </div>
+        <div id="dailyAdsSection">
+          <h3 class="section-title"><i class="fa-solid fa-play-circle" style="color:#f44336;"></i> Daily Ads Income</h3>
+          <div style="display: flex; gap: 10px;" id="adSlotsRow">
+            <div class="card" id="adSlot1Card" style="flex:1; text-align:center; padding:15px; cursor:pointer;" onclick="watchAdSlot(1)">
+              <i class="fa-solid fa-play" style="font-size:2rem; color:#ccc;"></i>
+              <p style="font-weight:600;">Ad Slot 1</p><p style="font-size:0.75rem;" id="adSlot1Count">25/25 Watched</p>
+              <p style="font-size:0.7rem; color:#4caf50;" id="adSlot1RewardLabel"></p>
+              <p style="font-size:0.7rem; color:#e53935; display:none; font-weight:600; margin-top:4px;" id="adSlot1Timer"></p>
+            </div>
+            <div class="card" id="adSlot2Card" style="flex:1; text-align:center; padding:15px; cursor:pointer;" onclick="watchAdSlot(2)">
+              <i class="fa-solid fa-play" style="font-size:2rem; color:#ccc;"></i>
+              <p style="font-weight:600;">Ad Slot 2</p><p style="font-size:0.75rem;" id="adSlot2Count">25/25 Watched</p>
+              <p style="font-size:0.7rem; color:#4caf50;" id="adSlot2RewardLabel"></p>
+              <p style="font-size:0.7rem; color:#e53935; display:none; font-weight:600; margin-top:4px;" id="adSlot2Timer"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-task" class="tab-section">
+        <div class="card" style="background:#e8f5e9;">
+          <h3 style="color:#2e7d32; text-align:center;">Task Center</h3>
+          <p style="text-align:center;">টাস্ক কমপ্লিট করে ইনকাম বাড়ান</p>
+        </div>
+        <div id="taskListContainer">
+          <!-- Tasks are rendered dynamically from Admin Panel settings -->
+        </div>
+      </section>
+
+      <section id="tab-refer" class="tab-section">
+        <div class="card refer-box" style="text-align:center;">
+          <i class="fa-solid fa-gift"></i>
+          <h3>বন্ধুদের রেফার করুন</h3>
+          <p style="color:#666;" id="referBonusText">প্রতি ফ্রেন্ডে 1 TK!</p>
+          <div class="refer-link-container">
+            <input type="text" id="referLink" value="" readonly>
+            <button class="btn-copy" onclick="copyReferLink()"><i class="fa-regular fa-copy"></i></button>
+          </div>
+          <button class="btn-primary" style="background:#0088cc; margin-top:12px;" onclick="showToast('শেয়ার মেনু খোলা হচ্ছে...')"><i class="fa-brands fa-telegram"></i> Invite Link Share</button>
+        </div>
+        <h3 class="section-title"><i class="fa-solid fa-crown" style="color:#ff9800;"></i> Top Refers</h3>
+
+        <div class="card" id="leaderboardList" style="text-align:center; color:#888;">এখনো কোনো রেফার নেই</div>
+      </section>
+
+      <section id="tab-wallet" class="tab-section">
+        <h3 class="section-title"><i class="fa-solid fa-wallet" style="color:#e52d87;"></i> Withdraw</h3>
+        <div class="card">
+          <form id="withdrawForm" onsubmit="handleWithdraw(event)">
+            <div style="margin-bottom:12px;"><label>Select Method</label>
+              <select class="form-control" id="withdrawMethod" required><option value="Bkash">Bkash</option><option value="Nagad">Nagad</option><option value="Rocket">Rocket</option></select>
+              <small style="color:#e91e63;" id="minWithdrawHint">Min Withdraw: 50 TK</small>
+            </div>
+            <div style="margin-bottom:12px;"><label>Account Number</label><input type="number" class="form-control" id="withdrawNumber" placeholder="01XXXXXXXXX" required></div>
+            <div style="margin-bottom:12px;"><label>Amount</label><input type="number" class="form-control" id="withdrawAmount" placeholder="Minimum 50 TK" required min="50" oninput="updateWithdrawFeePreview()"></div>
+            <div class="card" style="background:#f3f9f6; padding:14px 16px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+              <span>উইথড্র চার্জ: <strong style="color:#e91e63;" id="withdrawFeeText">৳0.00 (0%)</strong></span>
+              <span>আপনি পাবেন: <strong style="color:#2e7d32;" id="withdrawReceiveText">৳0.00</strong></span>
+            </div>
+            <button type="submit" class="btn-primary">Submit Withdraw</button>
+          </form>
+        </div>
+        <h3 class="section-title"><i class="fa-solid fa-clock-rotate-left"></i> History</h3>
+        <div class="card" id="withdrawHistoryBox" style="text-align:center; color:#888;">No History</div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <div class="nav-item active" id="navItemHome" onclick="switchTab('home', this)"><i class="fa-solid fa-house"></i></div>
+      <div class="nav-item" id="navItemTask" onclick="switchTab('task', this)"><i class="fa-solid fa-list-check"></i></div>
+      <div class="nav-item" id="navItemRefer" onclick="switchTab('refer', this)"><i class="fa-solid fa-gift"></i></div>
+      <div class="nav-item" id="navItemWallet" onclick="switchTab('wallet', this)"><i class="fa-solid fa-wallet"></i></div>
+    </nav>
+  </div>
+
+  <div id="toast">Message</div>
+
+  <!-- SCREENSHOT SUBMIT MODAL -->
+  <div class="ss-modal-overlay" id="referGateModalOverlay">
+    <div class="ss-modal-box" style="text-align:left;">
+      <p id="referGateModalText" style="font-size:1rem; line-height:1.5; color:#222; margin-bottom:18px;"></p>
+      <div style="text-align:right;">
+        <button onclick="closeReferGateModal()" style="background:none; border:none; color:#1976d2; font-weight:600; font-size:1rem; cursor:pointer;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AD WATCH MODAL: user must watch the full duration set from Admin Panel before reward is credited -->
+  <div class="ss-modal-overlay" id="adWatchModalOverlay">
+    <div class="aw-modal-box">
+      <h4 id="adWatchModalTitle">Ad Slot 1 চলছে...</h4>
+      <p class="aw-modal-sub">এড শেষ না হওয়া পর্যন্ত এই পেজে থাকুন, সময় শেষ হলে ব্যালেন্স নিজে থেকেই যোগ হবে</p>
+      <div class="aw-ring-wrap">
+        <svg viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="awGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#e52d87"/>
+              <stop offset="100%" stop-color="#ff5e3a"/>
+            </linearGradient>
+          </defs>
+          <circle class="aw-ring-bg" cx="60" cy="60" r="52"></circle>
+          <circle class="aw-ring-fg" id="adWatchRingFg" cx="60" cy="60" r="52"></circle>
+        </svg>
+        <div class="aw-ring-count" id="adWatchCountText">15</div>
+      </div>
+      <div class="aw-modal-note" id="adWatchRewardNote"></div>
+    </div>
+  </div>
+
+  <div class="ss-modal-overlay" id="ssModalOverlay">
+    <div class="ss-modal-box">
+      <h4 id="ssModalTitle">স্ক্রিনশট জমা দিন</h4>
+      <p class="ss-modal-sub">টাস্ক কমপ্লিট করার প্রমাণ স্ক্রিনশট আপলোড করুন</p>
+      <input type="file" id="ssFileInput" accept="image/*" class="ss-file-input">
+      <div id="ssPreviewBox" class="ss-preview-box"></div>
+      <div class="ss-modal-actions">
+        <button class="btn-task" style="background:#eee; color:#444;" onclick="closeScreenshotModal()">বাতিল</button>
+        <button class="btn-task" id="ssSubmitBtn" onclick="submitScreenshot()">জমা দিন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TASK VIEW MODAL (shows Task Image + Task Link) -->
+  <div class="tv-modal-overlay" id="tvModalOverlay">
+    <div class="tv-modal-box">
+      <h4 id="tvModalTitle">Task</h4>
+      <div class="tv-modal-image-box" id="tvModalImageBox"></div>
+      <div class="tv-modal-reward" id="tvModalReward"></div>
+      <a href="#" id="tvModalLink" class="tv-modal-link" target="_blank" rel="noopener">কোনো লিংক সেট করা নেই</a>
+      <div class="tv-modal-actions">
+        <button class="btn-task" style="background:#eee; color:#444;" onclick="closeTaskViewModal()">বন্ধ করুন</button>
+        <button class="btn-task" id="tvModalOpenBtn" onclick="confirmOpenTaskLink()">লিংক ওপেন করুন</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================== FIREBASE CONNECTION (ADDED) ====================== -->
+<!-- দ্রষ্টব্য: আগে এখানে সরাসরি www.gstatic.com থেকে ৪টা <script src> ট্যাগ দিয়ে Firebase SDK
+     লোড করা হতো। কিন্তু কিছু নেটওয়ার্ক/ISP/Telegram ইনঅ্যাপ ব্রাউজারে gstatic.com পুরোপুরি ব্লকড
+     থাকে, ফলে SDK কখনোই লোড হতো না ("firebase is not defined")। এখন একটা JS লোডার দিয়ে
+     একাধিক CDN (প্রথমে gstatic.com, না পেলে jsDelivr, তাও না পেলে unpkg) ক্রমান্বয়ে চেষ্টা করা হয়,
+     যাতে যেকোনো একটা CDN পৌঁছানো গেলেই অ্যাপ চলতে পারে।
+     Analytics SDK ইচ্ছাকৃতভাবে বাদ দেওয়া হয়েছে — Telegram-এর ইনঅ্যাপ WebView-তে এটা
+     "DataCloneError: Headers object could not be cloned" এরর ছোঁড়ে (Telegram WebView-এর
+     postMessage/structured-clone সাপোর্টের সীমাবদ্ধতার কারণে)। Analytics মূল অ্যাপ ফাংশনালিটির
+     (auth/database) জন্য জরুরি না, তাই এটা বাদ দিলে কোনো ক্ষতি নেই, বরং এই এররটা চলে যাবে। -->
+<script>
+(function () {
+  const FIREBASE_VERSION = '10.12.2';
+  const CDN_BASES = [
+    'https://www.gstatic.com/firebasejs/' + FIREBASE_VERSION + '/',
+    'https://cdn.jsdelivr.net/npm/firebase@' + FIREBASE_VERSION + '/',
+    'https://unpkg.com/firebase@' + FIREBASE_VERSION + '/'
+  ];
+  const SDK_FILES = [
+    'firebase-app-compat.js',
+    'firebase-auth-compat.js',
+    'firebase-database-compat.js'
+    // firebase-analytics-compat.js ইচ্ছাকৃতভাবে বাদ — উপরের নোট দেখুন
+  ];
+
+  function loadScript(url) {
+    return new Promise(function (resolve, reject) {
+      const s = document.createElement('script');
+      s.src = url;
+      s.onload = function () { resolve(url); };
+      s.onerror = function () { reject(new Error('load failed: ' + url)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  // একই ফাইলের জন্য CDN গুলো একে একে চেষ্টা করে, প্রথম যেটা সফল হয় সেটাই ব্যবহার হবে
+  function loadFromAnyCdn(fileName) {
+    return CDN_BASES.reduce(function (chain, base) {
+      return chain.catch(function () {
+        return loadScript(base + fileName);
+      });
+    }, Promise.reject(new Error('start')));
+  }
+
+  // ফাইলগুলো অবশ্যই এই ক্রমে লোড হতে হবে (app আগে, তারপর auth/database)
+  window.__mahimFirebaseSdkReady = SDK_FILES.reduce(function (chain, fileName) {
+    return chain.then(function () {
+      return loadFromAnyCdn(fileName).catch(function (err) {
+        console.error('Firebase SDK (' + fileName + ') কোনো CDN থেকেই লোড করা যায়নি:', err);
+        throw err;
+      });
+    });
+  }, Promise.resolve());
+})();
+</script>
+
+<script>
+  const firebaseConfig = {
   apiKey: "AIzaSyCifxw05peGi9lAJxyH1tw8uBfWznNyuhI",
   authDomain: "gotasks-ern.firebaseapp.com",
   databaseURL: "https://gotasks-ern-default-rtdb.firebaseio.com",
@@ -649,146 +1184,126 @@
   appId: "1:457081461962:web:1b62e4b3a5003c6052a833"
 };
 
-    // Initialize Firebase
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+  // ====================== SAFE FIREBASE INIT + ANONYMOUS AUTH (ADDED) ======================
+  // উপরের লোডার (window.__mahimFirebaseSdkReady) SDK ফাইলগুলো একাধিক CDN থেকে চেষ্টা করে
+  // লোড করার পরে resolve/reject হয়। সেটার জন্য অপেক্ষা করেই কেবল firebase.initializeApp() ও
+  // signInAnonymously() কল করা হয় — যাতে SDK লোড না হলে পুরো অ্যাপ ক্র্যাশ না করে বরং
+  // স্পষ্ট এরর লগ করে লোকাল-অনলি মোডে (রিয়েল-টাইম সিঙ্ক ছাড়া) চালু হয়।
+
+  // signInAnonymously() মাঝেমাঝে সাময়িক নেটওয়ার্ক গ্লিচের কারণে ব্যর্থ হতে পারে (বিশেষ করে
+  // মোবাইল নেটওয়ার্কে) — তাই এখানে অল্প কয়েকবার (৩ বার, ২ সেকেন্ড বিরতিতে) অটো-রিট্রাই করা হয়,
+  // এবং শেষ পর্যন্ত ব্যর্থ হলে এরর কোড অনুযায়ী স্পষ্ট, নির্দিষ্ট কারণ লগ করা হয়।
+  function signInAnonymouslyWithRetry(maxAttempts) {
+    let attempt = 0;
+    function tryOnce() {
+      attempt++;
+      return firebase.auth().signInAnonymously().catch((err) => {
+        if (attempt < maxAttempts) {
+          console.warn('Anonymous sign-in ব্যর্থ (চেষ্টা ' + attempt + '/' + maxAttempts + '), আবার চেষ্টা হচ্ছে...', err.code);
+          return new Promise((res) => setTimeout(res, 2000)).then(tryOnce);
+        }
+        if (err.code === 'auth/operation-not-allowed') {
+          console.error(
+            'Firebase anonymous sign-in ব্যর্থ: Anonymous প্রোভাইডার এখনো Enable করা নেই। ' +
+            'সমাধান: Firebase Console → Build → Authentication → Sign-in method → Anonymous → Enable করুন।'
+          );
+        } else if (err.code === 'auth/network-request-failed') {
+          console.error(
+            'Firebase anonymous sign-in ব্যর্থ (নেটওয়ার্ক): এই ডিভাইস/নেটওয়ার্ক থেকে Firebase Auth-এর ' +
+            'সার্ভারে (identitytoolkit.googleapis.com) পৌঁছানো যাচ্ছে না। এটা স্ট্যাটিক CDN না, তাই ' +
+            'মিরর CDN দিয়ে বাইপাস করা সম্ভব না। সমাধান: ভিন্ন নেটওয়ার্কে (মোবাইল ডেটা/ওয়াইফাই পাল্টে) ' +
+            'অথবা VPN দিয়ে টেস্ট করে দেখুন Google-এর সার্ভিস (googleapis.com) এই নেটওয়ার্ক থেকে ব্লকড কিনা।'
+          );
+        } else {
+          console.error('Firebase anonymous sign-in ব্যর্থ:', err.code || err.message, err);
+        }
+        throw err;
+      });
     }
-    console.log("Firebase Connected Successfully in Admin Panel!");
-  </script>
-  </head>
-<body class="locked">
+    return tryOnce();
+  }
 
-<div class="login-overlay" id="loginOverlay">
-  <div class="login-box">
-    <div class="login-logo">
-      <i class="fa-solid fa-shield-halved"></i>
-      <h2>Mahim Admin Panel</h2>
-      <p>এডমিন একাউন্টে সাইন ইন করুন</p>
-    </div>
-    <div class="login-error" id="loginError">ভুল ইমেইল বা পাসওয়ার্ড</div>
-    <div class="login-form">
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" class="form-control" id="loginEmail" placeholder="admin@mahim.com">
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <div class="password-wrap">
-          <input type="password" class="form-control" id="loginPassword" placeholder="••••••••">
-          <i class="fa-solid fa-eye toggle-eye" id="toggleEyeIcon" onclick="togglePasswordView()"></i>
-        </div>
-      </div>
-      <button class="btn btn-primary" onclick="attemptLogin()">সাইন ইন</button>
-      <p style="text-align:center; margin-top:14px;">
-        <a href="#" onclick="openForgotPasswordModal(); return false;" style="color:var(--primary); font-size:0.9rem; font-weight:600; text-decoration:none;">পাসওয়ার্ড ভুলে গেছেন?</a>
-      </p>
-    </div>
-  </div>
-</div>
+  window.mahimAuthReady = Promise.resolve(window.__mahimFirebaseSdkReady)
+    .then(function () {
+      if (typeof firebase === 'undefined') {
+        console.error(
+          'Firebase SDK কোনো CDN (gstatic.com / jsDelivr / unpkg) থেকেই লোড করা যায়নি। এই ডিভাইস/' +
+          'নেটওয়ার্ক থেকে এই ৩টা CDN-ই ব্লকড হতে পারে। সমাধান: Firebase SDK ফাইলগুলো ডাউনলোড করে ' +
+          'নিজের সার্ভারে self-host করে <script src> রিলেটিভ পাথ দিয়ে লোড করুন। আপাতত অ্যাপ লোকাল ' +
+          'ক্যাশ দিয়ে (রিয়েল-টাইম সিঙ্ক ছাড়া) চালু হবে।'
+        );
+        return null;
+      }
 
-<div class="modal-overlay" id="forgotPasswordModal">
-  <div class="modal-box">
-    <h4><i class="fa-solid fa-key"></i> পাসওয়ার্ড রিসেট করুন</h4>
-    <div id="fpStep1">
-      <p style="color:var(--muted); font-size:0.9rem; margin-bottom:12px;">আপনার এডমিন ইমেইল দিন — Firebase থেকে সরাসরি সেই ইমেইলে একটি আসল পাসওয়ার্ড-রিসেট লিংক পাঠানো হবে।</p>
-      <div class="form-group">
-        <label>Admin Email</label>
-        <input type="email" class="form-control" id="fpEmailInput" placeholder="admin@mahim.com">
-      </div>
-      <div class="login-error" id="fpStep1Error"></div>
-      <div class="modal-actions" style="margin-top:14px;">
-        <button class="btn btn-outline" style="flex:1;" onclick="closeForgotPasswordModal()">বাতিল</button>
-        <button class="btn btn-primary" style="flex:1;" onclick="sendResetCode()">রিসেট লিংক পাঠান</button>
-      </div>
-    </div>
-  </div>
-</div>
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        console.log("Firebase Connected Successfully!");
+      } catch (e) {
+        console.error('Firebase initializeApp ব্যর্থ:', e);
+        return null;
+      }
 
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <i class="fa-solid fa-shield-haltered"></i> <span>Admin</span>
-  </div>
-  <ul class="nav-menu">
-    <li><a href="#" class="active" data-section="general"><i class="fa-solid fa-gear"></i> <span>General</span></a></li>
-    <li><a href="#" data-section="appearance"><i class="fa-solid fa-palette"></i> <span>Appearance</span></a></li>
-    <li><a href="#" data-section="links"><i class="fa-solid fa-link"></i> <span>Links & URLs</span></a></li>
-    <li><a href="#" data-section="images"><i class="fa-solid fa-images"></i> <span>Images & Media</span></a></li>
-    <li><a href="#" data-section="features"><i class="fa-solid fa-sliders"></i> <span>Feature Toggle</span></a></li>
-    <li><a href="#" data-section="tasks"><i class="fa-solid fa-list-check"></i> <span>Tasks Control</span></a></li>
-    <li><a href="#" data-section="adslots"><i class="fa-solid fa-ad"></i> <span>Ad Slots (25 Links)</span></a></li>
-    <li><a href="#" data-section="withdraw"><i class="fa-solid fa-money-bill-transfer"></i> <span>Withdraw Requests</span><span class="nav-badge" id="pendingBadge" style="display:none;">0</span></a></li>
-    <li><a href="#" data-section="users"><i class="fa-solid fa-users"></i> <span>Users & Balance</span></a></li>
-    <li><a href="#" data-section="submissions"><i class="fa-solid fa-camera"></i> <span>Task Screenshots</span><span class="nav-badge" id="submissionsBadge" style="display:none;">0</span></a></li>
-    <li class="logout-link"><a href="#" onclick="logoutAdmin(); return false;"><i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span></a></li>
-  </ul>
-</aside>
+      // Security Rules-এ (auth != null) দেওয়ার জন্য প্রতিটা ইউজারকে (এমনকি Telegram/গেস্ট
+      // ইউজারকেও) আসল Firebase Authentication দিয়ে সাইন-ইন থাকতে হবে।
+      return new Promise(function (resolve) {
+        try {
+          firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+              console.log("Firebase Auth Ready. UID:", user.uid);
+              resolve(user);
+            } else {
+              signInAnonymouslyWithRetry(3).catch(() => {
+                resolve(null); // Auth ব্যর্থ হলেও অ্যাপ যেন চিরকাল আটকে না থাকে
+              });
+              // signInAnonymously() সফল হলে onAuthStateChanged আবার ট্রিগার হয়ে উপরের if(user) শাখায় resolve হবে
+            }
+          });
+        } catch (e) {
+          console.error('Firebase Auth চালু করা যায়নি:', e);
+          resolve(null);
+        }
+      });
+    })
+    .catch(function (err) {
+      console.error('Firebase SDK লোড/init সম্পূর্ণ ব্যর্থ:', err);
+      return null;
+    });
 
-<main class="main-content" id="adminMain">
-  <div class="top-bar">
-    <h2 class="page-title" id="pageTitle">⚙️ General Settings</h2>
-    <span class="admin-badge"><i class="fa-solid fa-user-shield"></i> Super Admin</span>
-  </div>
-  <div id="dynamicContent"></div>
-</main>
-
-<div class="modal-overlay" id="reqModal">
-  <div class="modal-box" id="reqModalBody"></div>
-</div>
-
-<div class="ss-fullview-overlay" id="ssFullviewOverlay" onclick="closeSsFullview()">
-  <img id="ssFullviewImg" src="" alt="Screenshot">
-</div>
-
-<div class="toast-admin" id="adminToast">✅ Saved successfully</div>
-
-<!-- Firebase already initialized once at the top of <head>; no need to re-init here. -->
+  // যেকোনো জায়গা থেকে সহজে বর্তমান Firebase Auth UID পাওয়ার হেল্পার (SDK লোড না হলে null রিটার্ন করে)
+  window.getFirebaseUid = function () {
+    try {
+      if (typeof firebase === 'undefined') return null;
+      const u = firebase.auth().currentUser;
+      return u ? u.uid : null;
+    } catch (e) {
+      return null;
+    }
+  };
+</script>
+<!-- ========================================================================= -->
 
 <script>
   (function() {
-    const adminConfig = {
-      // adminEmail এখন শুধু প্রদর্শনের জন্য — Firebase Auth লগইনের সময় currentUser.email থেকে
-      // অটো-আপডেট হয়। পাসওয়ার্ড আর কোথাও প্লেইনটেক্সটে সেভ হয় না (Firebase Auth নিজেই সামলায়)।
-      adminEmail: "admin@mahim.com",
+    // ====================== LOAD ADMIN PANEL SETTINGS ======================
+    // এই অ্যাপ অ্যাডমিন প্যানেলে (mahim-admin-panel.html) সেভ করা সেটিংস
+    // localStorage থেকে পড়ে নিজেকে কাস্টমাইজ করে: App Name, Currency,
+    // Min/Max Withdraw, Task লিস্ট (নাম, রিওয়ার্ড, লিংক, ছবি), Ad Slot সংখ্যা।
+    const defaultAdminConfig = {
       appName: "Mahim",
-      appTagline: "Earn by tasks & ads",
       currency: "TK",
       minWithdraw: 50,
       maxWithdraw: 5000,
-      primaryColor: "#e52d87",
-      secondaryColor: "#ff5e3a",
-      logoUrl: "",
-      faviconUrl: "",
-      telegramChannel1: "https://t.me/mahim_bangla",
-      telegramChannel2: "https://t.me/income_tips",
-      telegramChannel3: "https://t.me/mahim_update",
-      youtubeLink: "https://youtube.com/@mahim",
-      facebookLink: "https://facebook.com/mahimapp",
-      bannerImage: "https://via.placeholder.com/600x200/ff416c/white?text=Mahim+Banner",
-      taskIcon1: "",
-      taskIcon2: "",
-      enableAds: true,
-      enableTasks: true,
-      enableRefer: true,
-      enableWithdraw: true,
-      forceChannelJoin: true,
       tasks: [
-        { title: "Official Channel Join", reward: 1, link: "https://t.me/mahim_bangla", image: "" },
-        { title: "Subscribe Youtube", reward: 10, link: "https://youtube.com/@mahim", image: "" },
-        { title: "Facebook Share", reward: 2, link: "https://facebook.com/mahimapp", image: "" },
-        { title: "Instagram Follow", reward: 2, link: "", image: "" },
-        { title: "App Review Dao", reward: 5, link: "", image: "" },
-        { title: "Friend Refer Koro", reward: 5, link: "", image: "" },
-        { title: "Daily Login Bonus", reward: 1, link: "", image: "" },
-        { title: "Survey Complete Koro", reward: 8, link: "", image: "" },
-        { title: "Video Dekho", reward: 1, link: "", image: "" },
-        { title: "Profile Complete Koro", reward: 3, link: "", image: "" }
+        { title: "Official Channel Join", reward: 1, link: "", image: "" },
+        { title: "Subscribe Youtube", reward: 10, link: "", image: "" },
+        { title: "Facebook Post Share", reward: 2, link: "", image: "" }
       ],
-      adSlot1Links: Array.from({length:25}, (_,i)=>`https://example.com/ad1-${i+1}`),
-      adSlot2Links: Array.from({length:25}, (_,i)=>`https://example.com/ad2-${i+1}`),
+      adSlot1Links: new Array(25),
+      adSlot2Links: new Array(25),
       adSlot1Reward: 1,
       adSlot2Reward: 1,
-      adSlot1CooldownHours: 24,
-      adSlot2CooldownHours: 24,
       adSlot1DurationSeconds: 15,
       adSlot2DurationSeconds: 15,
       minReferralsRequired: 10,
@@ -797,18 +1312,185 @@
       telegramBotAppUrl: "https://t.me/Go_tasks_ern_bot/app"
     };
 
-    // ---- Users & withdraw requests (populated from real user activity / localStorage) ----
-    let users = [];
+    let adminConfig = defaultAdminConfig;
+    try {
+      const saved = localStorage.getItem('mahim_admin_config');
+      if (saved) {
+        adminConfig = Object.assign({}, defaultAdminConfig, JSON.parse(saved));
+      }
+    } catch (e) {
+      console.warn('Admin config load failed, using defaults', e);
+    }
 
-    let withdrawRequests = [];
+    // ---------- REFERRAL CODE CAPTURE ----------
+    // Telegram Mini App লিংক (t.me/Go_tasks_ern_bot/app?startapp=UID) দিয়ে ঢুকলে Telegram নিজে থেকেই
+    // সেই কোডটা Telegram.WebApp.initDataUnsafe.start_param এ পাঠায়। ব্রাউজারে টেস্ট করার জন্য ?ref=UID
+    // ও কাজ করবে। যে UID/কোড দিয়ে ইউজার প্রথমবার ঢোকে সেটা sessionStorage-এ রাখা হয়, যাতে সাইন-ইন করার
+    // পরেও (পেজ রিলোড হলেও) রেফারেল কোডটা হারিয়ে না যায়, যতক্ষণ না নতুন একাউন্ট তৈরি হয়ে বোনাস দেওয়া হয়।
+    function capturePendingReferral() {
+      try {
+        if (window.Telegram && window.Telegram.WebApp) {
+          window.Telegram.WebApp.ready();
+        }
+        let code = null;
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.start_param) {
+          code = window.Telegram.WebApp.initDataUnsafe.start_param;
+        }
+        if (!code) {
+          const params = new URLSearchParams(window.location.search);
+          code = params.get('startapp') || params.get('ref');
+        }
+        if (code) {
+          sessionStorage.setItem('mahim_pending_ref', code.trim());
+        }
+      } catch (e) {
+        console.warn('Referral capture failed', e);
+      }
+    }
+    capturePendingReferral();
 
-    let currentFilter = "pending";
+    function applyAdminConfigToUI() {
+      // App name / title
+      document.title = adminConfig.appName + ' - Sign In';
+      const authTitle = document.getElementById('authTitle');
+      if (authTitle) authTitle.textContent = adminConfig.appName;
+      const headerAppName = document.getElementById('headerAppName');
+      if (headerAppName) headerAppName.textContent = '💰 ' + adminConfig.appName + ' 💸';
 
-    // ---------- FIREBASE REAL-TIME SYNC ----------
-    // এখানেও localStorage শুধু নিজের ডিভাইসের cache — Firebase Realtime Database হলো আসল/মাস্টার ডেটা।
-    // এডমিন লগইন ক্রেডেনশিয়াল এখন সম্পূর্ণ Firebase Authentication সামলায় (কোথাও প্লেইনটেক্সটে
-    // সেভ হয় না)। বাকি সব সাধারণ কনফিগ (appName, tasks, ad links ইত্যাদি) থাকে mahimAdminConfig
-    // নোডে, যেটা ইউজার অ্যাপ (index.html) পড়ে।
+      // Currency
+      const currencyEl = document.getElementById('balanceCurrency');
+      if (currencyEl) currencyEl.textContent = adminConfig.currency;
+
+      // Min withdraw hint + amount field validation
+      const minHint = document.getElementById('minWithdrawHint');
+      if (minHint) minHint.textContent = `Min Withdraw: ${adminConfig.minWithdraw} ${adminConfig.currency}`;
+      const amountField = document.getElementById('withdrawAmount');
+      if (amountField) {
+        amountField.min = adminConfig.minWithdraw;
+        amountField.max = adminConfig.maxWithdraw;
+        amountField.placeholder = `Minimum ${adminConfig.minWithdraw} ${adminConfig.currency}`;
+      }
+      if (typeof updateWithdrawFeePreview === 'function') updateWithdrawFeePreview();
+
+      // Ad slot watched counts (based on number of links admin configured)
+      const slot1RewardLabel = document.getElementById('adSlot1RewardLabel');
+      if (slot1RewardLabel) {
+        const r1 = (adminConfig.adSlot1Reward !== undefined && adminConfig.adSlot1Reward !== null) ? adminConfig.adSlot1Reward : 1;
+        slot1RewardLabel.textContent = `+৳${Number(r1).toFixed(2)} / Ad`;
+      }
+      const slot2RewardLabel = document.getElementById('adSlot2RewardLabel');
+      if (slot2RewardLabel) {
+        const r2 = (adminConfig.adSlot2Reward !== undefined && adminConfig.adSlot2Reward !== null) ? adminConfig.adSlot2Reward : 1;
+        slot2RewardLabel.textContent = `+৳${Number(r2).toFixed(2)} / Ad`;
+      }
+
+      renderAdSlots();
+      startAdSlotTimers();
+      reconcileWithdrawRefunds();
+      renderBalance();
+      renderReferralInfo();
+      renderProfileHeader();
+      renderWithdrawHistory();
+
+      renderTasks();
+
+      applyFeatureToggles();
+    }
+
+    // ---------- FEATURE TOGGLES (from Admin Panel > Feature Toggle) ----------
+    // আগে এই টগলগুলো শুধু সেভ হতো কিন্তু ইউজার অ্যাপে তাদের কোনো প্রভাবই পড়তো না —
+    // অফ করলেও Daily Ads / Task Center / Refer / Withdraw সবসময় দেখা যেত। এখন প্রতিটা
+    // টগলের সাথে সাথে সংশ্লিষ্ট সেকশন ও নিচের নেভিগেশন আইকন দেখানো/লুকানো হয়।
+    function isFeatureOn(flag) {
+      // flag আগে থেকে সেভ করা না থাকলে (undefined) ফিচারটা ডিফল্ট এনাবল থাকবে
+      return flag !== false;
+    }
+
+    function applyFeatureToggles() {
+      const adsOn = isFeatureOn(adminConfig.enableAds);
+      const tasksOn = isFeatureOn(adminConfig.enableTasks);
+      const referOn = isFeatureOn(adminConfig.enableRefer);
+      const withdrawOn = isFeatureOn(adminConfig.enableWithdraw);
+
+      const dailyAdsSection = document.getElementById('dailyAdsSection');
+      if (dailyAdsSection) dailyAdsSection.style.display = adsOn ? '' : 'none';
+
+      const taskTab = document.getElementById('tab-task');
+      const navItemTask = document.getElementById('navItemTask');
+      if (taskTab) taskTab.style.display = tasksOn ? '' : 'none';
+      if (navItemTask) navItemTask.style.display = tasksOn ? '' : 'none';
+
+      const referTab = document.getElementById('tab-refer');
+      const navItemRefer = document.getElementById('navItemRefer');
+      if (referTab) referTab.style.display = referOn ? '' : 'none';
+      if (navItemRefer) navItemRefer.style.display = referOn ? '' : 'none';
+
+      const walletTab = document.getElementById('tab-wallet');
+      const navItemWallet = document.getElementById('navItemWallet');
+      if (walletTab) walletTab.style.display = withdrawOn ? '' : 'none';
+      if (navItemWallet) navItemWallet.style.display = withdrawOn ? '' : 'none';
+
+      // যে ট্যাবটা এখন সক্রিয় সেটাই যদি অফ করে দেওয়া হয়, তাহলে হোম ট্যাবে ফিরিয়ে আনে
+      const hiddenActiveSection = document.querySelector('.tab-section.active[style*="display: none"]');
+      if (hiddenActiveSection) {
+        window.switchTab('home', document.getElementById('navItemHome'));
+      }
+
+      // Force Channel Join: সাইন-ইন করার পর, চলতি সেশনে এখনো কনফার্ম না করা থাকলে গেট দেখায়
+      const gateOverlay = document.getElementById('channelGateModalOverlay');
+      if (gateOverlay) {
+        const forceJoinOn = adminConfig.forceChannelJoin === true;
+        const alreadyConfirmed = sessionStorage.getItem('mahim_channel_joined') === 'true';
+        const isSignedIn = sessionStorage.getItem('mahim_logged_in') === 'true';
+        if (forceJoinOn && isSignedIn && !alreadyConfirmed) {
+          gateOverlay.classList.add('show');
+        } else {
+          gateOverlay.classList.remove('show');
+        }
+      }
+    }
+
+    window.openChannelGateLink = function() {
+      const link = adminConfig.telegramChannel1 || (adminConfig.tasks && adminConfig.tasks[0] && adminConfig.tasks[0].link) || '';
+      if (link) {
+        window.open(link, '_blank');
+      } else {
+        showToast('এডমিন এখনো চ্যানেল লিংক সেট করেননি');
+      }
+    };
+
+    window.confirmChannelJoined = function() {
+      sessionStorage.setItem('mahim_channel_joined', 'true');
+      const gateOverlay = document.getElementById('channelGateModalOverlay');
+      if (gateOverlay) gateOverlay.classList.remove('show');
+      showToast('স্বাগতম! এখন অ্যাপ ব্যবহার করতে পারবেন');
+    };
+
+    // ---------- UNIFIED USER ACCOUNT STORE (shared with Admin Panel's "Users & Balance") ----------
+    // আগে ব্যালেন্স/পাসওয়ার্ড আলাদা আলাদা localStorage key-তে (mahim_user_balance, mahim_user_passwords, mahim_user_profiles)
+    // সেভ হতো, যেটা এডমিন প্যানেলের mahim_users লিস্টের সাথে কখনো মিলতো না। ফলে এডমিন ব্যালেন্স এড/কাট করলে,
+    // বা উইথড্র এপ্রুভ/রিজেক্ট করলে ইউজার প্যানেলে তার কোনো প্রভাব পড়তো না। এখন দুই প্যানেল একই mahim_users
+    // স্টোর ব্যবহার করে, তাই ব্যালেন্স সবসময় সিঙ্কে থাকবে।
+    const DEFAULT_BALANCE = 0.00;
+
+    function getUsersStore() {
+      try {
+        return JSON.parse(localStorage.getItem('mahim_users') || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveUsersStore(list) {
+      localStorage.setItem('mahim_users', JSON.stringify(list));
+      syncUsersToFirebase(list);
+    }
+
+    // ---------- FIREBASE REAL-TIME SYNC (মাল্টি-ডিভাইস) ----------
+    // localStorage শুধু এই ডিভাইসের নিজস্ব cache হিসেবে কাজ করে (তাৎক্ষণিক UI রেন্ডারের জন্য)।
+    // Firebase Realtime Database হলো আসল/মাস্টার ডেটা — প্রতিটা ইউজারের সম্পূর্ণ রেকর্ড (ব্যালেন্স,
+    // পাসওয়ার্ড, রেফারেল, ইত্যাদি) এখন mahimUsers/{id} নোডে সেভ হয়, যাতে এডমিন প্যানেল যেকোনো
+    // ডিভাইস থেকে খুললেই সব ইউজারের আসল, সবশেষ ডেটা দেখতে পায়।
     function fb() {
       try {
         if (typeof firebase === 'undefined' || !firebase.apps || !firebase.apps.length) return null;
@@ -818,44 +1500,33 @@
       }
     }
 
-    function splitAdminConfigForPublish(cfg) {
-      const clone = Object.assign({}, cfg);
-      delete clone.adminEmail;
-      return clone;
-    }
-
-    function syncConfigToFirebase() {
-      const db = fb();
-      if (!db) return;
-      try {
-        // adminEmail/password আর mahimAdminAuth নোডে সেভ হয় না — Firebase Authentication নিজেই
-        // ক্রেডেনশিয়াল সামলায়, তাই ডেটাবেসে কোথাও প্লেইনটেক্সট পাসওয়ার্ড থাকে না।
-        db.ref('mahimAdminConfig').set(splitAdminConfigForPublish(adminConfig))
-          .catch(err => console.warn('Firebase config sync failed (check database rules)', err));
-      } catch (e) {
-        console.warn('Firebase config sync failed', e);
-      }
-    }
-
     function syncUsersToFirebase(list) {
       const db = fb();
       if (!db) return;
       try {
         const updates = {};
-        (list || []).forEach(u => { if (u && u.id) updates['mahimUsers/' + u.id] = u; });
+        (list || []).forEach(u => {
+          if (!u || !u.id) return;
+          updates['mahimUsers/' + u.id] = u;
+        });
         if (Object.keys(updates).length === 0) return;
-        db.ref().update(updates).catch(err => console.warn('Firebase users sync failed', err));
+        db.ref().update(updates).catch(err => {
+          console.warn('Firebase users sync failed (check database rules)', err);
+        });
       } catch (e) {
         console.warn('Firebase users sync failed', e);
       }
     }
 
-    function syncWithdrawsToFirebase(list) {
+    // withdraw রিকোয়েস্ট Firebase-এ পাঠায় (mahimWithdraws/{id}) — এডমিন প্যানেল অন্য ডিভাইস থেকেও
+    // ইউজারের জমা দেওয়া রিকোয়েস্ট সাথে সাথে দেখতে পাবে।
+    function syncWithdrawToFirebase(reqOrList) {
       const db = fb();
       if (!db) return;
       try {
+        const list = Array.isArray(reqOrList) ? reqOrList : [reqOrList];
         const updates = {};
-        (list || []).forEach(w => { if (w && w.id) updates['mahimWithdraws/' + w.id] = w; });
+        list.forEach(w => { if (w && w.id) updates['mahimWithdraws/' + w.id] = w; });
         if (Object.keys(updates).length === 0) return;
         db.ref().update(updates).catch(err => console.warn('Firebase withdraw sync failed', err));
       } catch (e) {
@@ -863,12 +1534,14 @@
       }
     }
 
-    function syncSubmissionsToFirebase(list) {
+    // টাস্ক স্ক্রিনশট সাবমিশন Firebase-এ পাঠায় (mahimTaskSubmissions/{id})
+    function syncSubmissionToFirebase(subOrList) {
       const db = fb();
       if (!db) return;
       try {
+        const list = Array.isArray(subOrList) ? subOrList : [subOrList];
         const updates = {};
-        (list || []).forEach(s => { if (s && s.id) updates['mahimTaskSubmissions/' + s.id] = s; });
+        list.forEach(s => { if (s && s.id) updates['mahimTaskSubmissions/' + s.id] = s; });
         if (Object.keys(updates).length === 0) return;
         db.ref().update(updates).catch(err => console.warn('Firebase submission sync failed', err));
       } catch (e) {
@@ -876,695 +1549,337 @@
       }
     }
 
-    function saveConfig() {
-      localStorage.setItem('mahim_admin_config', JSON.stringify(adminConfig));
-      localStorage.setItem('mahim_users', JSON.stringify(users));
-      localStorage.setItem('mahim_withdraws', JSON.stringify(withdrawRequests));
-      syncConfigToFirebase();
-      syncUsersToFirebase(users);
-      syncWithdrawsToFirebase(withdrawRequests);
-      showToast('সমস্ত সেটিংস সংরক্ষণ করা হয়েছে ✅');
+    // পুরনো ভার্সনে সেভ হওয়া ডেটা (আলাদা key-তে) থাকলে হারিয়ে না যাওয়ার জন্য একবার মাইগ্রেট করে নেয়
+    function migrateLegacyUserData(email, userId) {
+      let migratedBalance = null;
+      let migratedPassword = null;
+      try {
+        const legacyBalances = JSON.parse(localStorage.getItem('mahim_user_balance') || '{}');
+        if (legacyBalances && legacyBalances[userId] !== undefined) migratedBalance = legacyBalances[userId];
+      } catch (e) {}
+      try {
+        const legacyPasswords = JSON.parse(localStorage.getItem('mahim_user_passwords') || '{}');
+        if (legacyPasswords && legacyPasswords[email]) migratedPassword = legacyPasswords[email];
+      } catch (e) {}
+      let migratedProfile = null;
+      try {
+        const legacyProfiles = JSON.parse(localStorage.getItem('mahim_user_profiles') || '{}');
+        if (legacyProfiles && legacyProfiles[email]) migratedProfile = legacyProfiles[email];
+      } catch (e) {}
+      return { migratedBalance, migratedPassword, migratedProfile };
     }
 
-    function loadConfig() {
-      const saved = localStorage.getItem('mahim_admin_config');
-      if (saved) Object.assign(adminConfig, JSON.parse(saved));
-      const savedUsers = localStorage.getItem('mahim_users');
-      if (savedUsers) users = JSON.parse(savedUsers);
-      const savedW = localStorage.getItem('mahim_withdraws');
-      if (savedW) withdrawRequests = JSON.parse(savedW);
+    // ১০ ডিজিটের একটা স্থায়ী UID তৈরি করে (একবার তৈরি হলে ইউজার অবজেক্টে সেভ থাকে, পরিবর্তন হয় না)
+    function generateUID() {
+      let uid = String(Math.floor(1000000000 + Math.random() * 9000000000));
+      return uid;
     }
 
-    // ---------- FIREBASE হাইড্রেশন + রিয়েল-টাইম listener ----------
-    // এডমিন প্যানেল খোলার সাথে সাথে Firebase (আসল/মাস্টার ডেটা) থেকে সবশেষ config/users/withdraws/
-    // submissions টেনে আনে, এবং প্রতিটা নোডে রিয়েল-টাইম listener বসায় — যাতে ইউজার অ্যাপে (যেকোনো
-    // ফোনে) কিছু ঘটলেই (নতুন ইউজার, নতুন withdraw request, নতুন স্ক্রিনশট) এই এডমিন প্যানেলে
-    // রিলোড ছাড়াই সাথে সাথে দেখা যায়।
-    function hydrateAndListenFirebase() {
-      const db = fb();
-      if (!db) return;
+    // ---------- DEVICE FINGERPRINT (ফেক রেফার ঠেকানোর জন্য) ----------
+    // আগে প্রতিটা ব্রাউজারে একটা র‍্যান্ডম deviceId localStorage-এ জেনারেট করে সেভ রাখা হতো।
+    // এখন আসল Firebase Authentication চালু হওয়ায় প্রতিটা ডিভাইস/ব্রাউজারের নিজস্ব, আসল ও
+    // যাচাইযোগ্য একটা পরিচয় (Firebase Anonymous Auth UID) ইতিমধ্যেই আছে — তাই আলাদা করে
+    // localStorage-এ কোনো নিজস্ব র‍্যান্ডম আইডি বানানোর/সেভ করার দরকার নেই। এই ফাংশন এখন
+    // সরাসরি firebase.auth().currentUser.uid রিটার্ন করে (bootApp() Auth resolve হওয়ার
+    // পরেই কল হয়, তাই এই সময় uid সবসময় পাওয়া যাবে)।
+    function getDeviceId() {
+      return (window.getFirebaseUid && window.getFirebaseUid()) || 'dev_unknown';
+    }
 
-      // লগইনের পর currentUser থেকে ইমেইল আপডেট (শুধু প্রদর্শনের জন্য)
-      if (firebase.auth().currentUser) adminConfig.adminEmail = firebase.auth().currentUser.email;
+    // ইমেইলের প্রথম অংশ থেকে @username তৈরি করে (প্রোফাইল কার্ডে দেখানোর জন্য)
+    function usernameFromEmail(email) {
+      const local = (email || '').split('@')[0] || 'user';
+      const clean = local.replace(/[^a-zA-Z0-9_]/g, '') || 'user';
+      return '@' + clean;
+    }
 
-      Promise.all([
-        db.ref('mahimAdminConfig').once('value').catch(() => null),
-        db.ref('mahimUsers').once('value').catch(() => null),
-        db.ref('mahimWithdraws').once('value').catch(() => null)
-      ]).then(([configSnap, usersSnap, withdrawsSnap]) => {
-        if (configSnap && configSnap.exists()) Object.assign(adminConfig, configSnap.val());
-        if (usersSnap && usersSnap.exists()) {
-          const val = usersSnap.val() || {};
-          users = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
+    function findUserByEmail(email) {
+      const users = getUsersStore();
+      const id = 'user_' + email;
+      return users.find(u => u.id === id || (u.email && u.email.toLowerCase() === email));
+    }
+
+    // ইউজার খুঁজে পায়, না পেলে একটা নতুন এন্ট্রি তৈরি করে (এবং পুরনো ডেটা থাকলে মাইগ্রেট করে) — এতে
+    // এডমিন প্যানেলের "Users & Balance" লিস্টেও ইউজারটি সাথে সাথে দেখা যাবে।
+    function findOrCreateUser(email, extra) {
+      email = (email || '').trim().toLowerCase();
+      const users = getUsersStore();
+      const id = 'user_' + email;
+      let user = users.find(u => u.id === id);
+      if (!user) {
+        const legacy = migrateLegacyUserData(email, id);
+        user = {
+          id: id,
+          name: (extra && extra.name) || (legacy.migratedProfile && legacy.migratedProfile.name) || email,
+          email: email,
+          uid: (extra && extra.uid) || generateUID(),
+          phone: (extra && extra.phone) || '',
+          password: (extra && extra.password) || legacy.migratedPassword || (email === VALID_EMAIL ? DEFAULT_PASSWORD : ''),
+          balance: (legacy.migratedBalance !== null ? Number(legacy.migratedBalance) : DEFAULT_BALANCE),
+          totalEarned: 0,
+          totalWithdrawn: 0,
+          referralCount: 0,
+          referredBy: (extra && extra.referredBy) || (legacy.migratedProfile && legacy.migratedProfile.referredBy) || null,
+          referralConfirmed: false,
+          deviceId: getDeviceId(),
+          joined: (extra && extra.joined) || (legacy.migratedProfile && legacy.migratedProfile.joined) || new Date().toISOString().slice(0, 10)
+        };
+
+        // ---------- REFERRAL ফ্রড গার্ড ----------
+        // আগে নতুন একাউন্ট তৈরি হওয়ার সাথে সাথেই রেফারারকে বোনাস দেওয়া হতো — এই কারণে যে-কেউ
+        // শুধু সাইন-আপ করেই (কোনো আসল অ্যাক্টিভিটি ছাড়াই) বোনাস বানিয়ে ফেলতে পারতো। এখন বোনাস সাথে
+        // সাথে দেওয়া হয় না — referredBy শুধু "pending" হিসেবে সেভ থাকে; নতুন ইউজার প্রথমবার একটা Ad
+        // পুরোপুরি দেখে সম্পূর্ণ করলে (finishAdWatch এ confirmReferralIfPending() কল হয়) তখনই
+        // রেফারারকে বোনাস দেওয়া হয়। এতে খালি সাইন-আপ করেই বোনাস বানানো বন্ধ হয়ে যায়।
+        //
+        // দ্রষ্টব্য: আগে এখানে একই deviceId থেকে রেফার করলে বোনাস পুরোপুরি ব্লক করে দেওয়া হতো,
+        // কিন্তু এতে পরিবারে শেয়ার করা ফোন/একই ফোনে টেস্টিং করলেও রেফার কাউন্ট বাড়ছিল না
+        // (false positive)। তাই এখন সেটা ব্লক না করে শুধু ফ্ল্যাগ করে রাখা হয় (suspiciousSameDevice),
+        // যাতে ভবিষ্যতে এডমিন প্যানেলে চাইলে এই তালিকা আলাদা করে রিভিউ করা যায় — কিন্তু বোনাস
+        // Ad-দেখা কনফার্মেশন সাপেক্ষে ঠিকই চলে।
+        try {
+          const refCode = sessionStorage.getItem('mahim_pending_ref');
+          if (refCode) {
+            const referrer = users.find(u => u.uid === refCode && u.id !== id);
+            if (referrer) {
+              const myDeviceId = user.deviceId;
+              const sameDeviceAlreadyUsed = users.some(u => u.deviceId && u.deviceId === myDeviceId);
+              if (sameDeviceAlreadyUsed) {
+                user.suspiciousSameDevice = true; // শুধু নোট রাখা, বোনাস আটকানো হচ্ছে না
+              }
+              user.referredBy = referrer.uid;
+              user.referralConfirmed = false; // প্রথম Ad সম্পূর্ণ হলে তবেই বোনাস কনফার্ম হবে
+            }
+            sessionStorage.removeItem('mahim_pending_ref');
+          }
+        } catch (e) {
+          console.warn('Referral capture failed', e);
         }
-        if (withdrawsSnap && withdrawsSnap.exists()) {
-          const val = withdrawsSnap.val() || {};
-          withdrawRequests = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
-        }
-        persistUsersAndWithdraws();
-        localStorage.setItem('mahim_admin_config', JSON.stringify(adminConfig));
-        if (currentSection) renderSection(currentSection);
-        updatePendingBadge();
-      }).catch(err => {
-        console.warn('Admin panel: initial Firebase hydrate failed, using local cache', err);
-      }).finally(() => {
-        attachAdminRealtimeListeners();
-      });
+
+        users.push(user);
+        saveUsersStore(users);
+      }
+      return user;
     }
 
-    function attachAdminRealtimeListeners() {
-      const db = fb();
-      if (!db) return;
+    // ---------- REFERRAL বোনাস কনফার্মেশন (ফেক রেফার গার্ডের ২য় ধাপ) ----------
+    // আগে এটা প্রথম Ad সম্পূর্ণ দেখলেই কনফার্ম হতো, তারপর শুধু টাস্ক লিংক ওপেন/দেখলেই কনফার্ম হতো —
+    // দুটোই বাদ দেওয়া হয়েছে। এখন এটা সত্যিকারের "টাস্ক কমপ্লিট" এর উপর নির্ভরশীল: ১০টা টাস্কের
+    // মধ্যে যেকোনো একটা টাস্কের স্ক্রিনশট সাবমিশন এডমিন "approved" করলে (দেখুন
+    // processApprovedTaskSubmissions ফাংশন), তখনই এই ফাংশন কল হয়ে রেফারারকে বোনাস দেয় এবং
+    // referralConfirmed = true করে দেয়, যাতে দ্বিতীয়বার একই রেফারেলের জন্য বোনাস দ্বিতীয়বার
+    // যোগ না হয়।
+    function confirmReferralIfPending() {
+      try {
+        const id = currentUserId();
+        const users = getUsersStore();
+        const user = users.find(u => u.id === id);
+        if (!user || !user.referredBy || user.referralConfirmed) return;
 
-      db.ref('mahimUsers').on('value', snap => {
-        const val = snap.val() || {};
-        users = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
-        localStorage.setItem('mahim_users', JSON.stringify(users));
-        if (currentSection === 'users') renderUsers();
-      });
+        const referrer = users.find(u => u.uid === user.referredBy);
+        if (!referrer) return;
 
-      db.ref('mahimWithdraws').on('value', snap => {
-        const val = snap.val() || {};
-        const newList = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
-        const oldPending = withdrawRequests.filter(r => r.status === 'pending').length;
-        withdrawRequests = newList;
-        localStorage.setItem('mahim_withdraws', JSON.stringify(withdrawRequests));
-        const newPending = withdrawRequests.filter(r => r.status === 'pending').length;
-        if (newPending > oldPending) {
-          showToast(`💸 নতুন উইথড্র রিকোয়েস্ট এসেছে! মোট পেন্ডিং: ${newPending}`);
-        }
-        updatePendingBadge();
-        if (currentSection === 'withdraw') renderWithdraw();
-      });
+        const bonus = (adminConfig.referralBonus !== undefined && adminConfig.referralBonus !== null) ? Number(adminConfig.referralBonus) : 1;
+        referrer.balance = Number(referrer.balance || 0) + bonus;
+        referrer.totalEarned = Number(referrer.totalEarned || 0) + bonus;
+        referrer.referralCount = Number(referrer.referralCount || 0) + 1;
+        user.referralConfirmed = true;
 
-      db.ref('mahimTaskSubmissions').on('value', snap => {
-        const val = snap.val() || {};
-        const newList = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
-        const oldPending = getSubmissions().filter(s => s.status === 'pending').length;
-        // শুধু localStorage আপডেট করা হচ্ছে (saveSubmissions() নয়), যাতে Firebase থেকে পাওয়া ডেটা
-        // আবার Firebase-এই push করে অপ্রয়োজনীয় রাউন্ড-ট্রিপ তৈরি না হয়
-        localStorage.setItem('mahim_task_submissions', JSON.stringify(newList));
-        const newPending = newList.filter(s => s.status === 'pending').length;
-        if (newPending > oldPending) {
-          showToast(`📷 নতুন ${newPending - oldPending}টি স্ক্রিনশট জমা পড়েছে! মোট পেন্ডিং: ${newPending}`);
-        }
-        lastKnownPendingCount = newPending;
-        updateSubmissionsBadge();
-        if (currentSection === 'submissions') renderSubmissions();
-      });
-
-      // এডমিন কনফিগ অন্য কোনো ডিভাইস থেকে বদলালে এখানেও রিফ্লেক্ট হবে (adminEmail/password ছাড়া)
-      db.ref('mahimAdminConfig').on('value', snap => {
-        if (!snap.exists()) return;
-        Object.assign(adminConfig, snap.val());
-        localStorage.setItem('mahim_admin_config', JSON.stringify(adminConfig));
-      });
-    }
-    loadConfig();
-
-    function persistUsersAndWithdraws() {
-      localStorage.setItem('mahim_users', JSON.stringify(users));
-      localStorage.setItem('mahim_withdraws', JSON.stringify(withdrawRequests));
-      syncUsersToFirebase(users);
-      syncWithdrawsToFirebase(withdrawRequests);
-    }
-
-    const dynamicContent = document.getElementById('dynamicContent');
-    const pageTitle = document.getElementById('pageTitle');
-
-    let currentSection = 'general';
-    function renderSection(section) {
-      currentSection = section;
-      switch(section) {
-        case 'general': renderGeneral(); break;
-        case 'appearance': renderAppearance(); break;
-        case 'links': renderLinks(); break;
-        case 'images': renderImages(); break;
-        case 'features': renderFeatures(); break;
-        case 'tasks': renderTasks(); break;
-        case 'adslots': renderAdSlots(); break;
-        case 'withdraw': renderWithdraw(); break;
-        case 'users': renderUsers(); break;
-        case 'submissions': renderSubmissions(); break;
-        default: renderGeneral();
+        saveUsersStore(users);
+        renderReferralInfo();
+      } catch (e) {
+        console.warn('Referral confirmation failed', e);
       }
     }
 
-    function renderGeneral() {
-      pageTitle.textContent = '⚙️ General Settings';
-      dynamicContent.innerHTML = `
-        <div class="card">
-          <div class="section-header"><h3>🔐 Admin Login</h3></div>
-          <p style="color:var(--muted); font-size:0.9rem; margin-bottom:10px;">লগইন ইমেইল/পাসওয়ার্ড এখন Firebase Authentication দিয়ে সুরক্ষিত — এখানে প্লেইনটেক্সটে সেভ হয় না।</p>
-          <div class="form-grid">
-            <div class="form-group"><label>বর্তমান লগইন ইমেইল</label><input type="email" class="form-control" id="adminEmail" value="${adminConfig.adminEmail}" disabled></div>
-          </div>
-          <button class="btn btn-primary" style="margin-top:14px;" onclick="openForgotPasswordModal()">পাসওয়ার্ড বদলাতে রিসেট ইমেইল পাঠান</button>
-        </div>
-        <div class="card">
-          <div class="section-header"><h3>📱 App Information</h3></div>
-          <div class="form-grid">
-            <div class="form-group"><label>App Name</label><input type="text" class="form-control" id="appName" value="${adminConfig.appName}"></div>
-            <div class="form-group"><label>Tagline</label><input type="text" class="form-control" id="appTagline" value="${adminConfig.appTagline}"></div>
-            <div class="form-group"><label>Currency</label><input type="text" class="form-control" id="currency" value="${adminConfig.currency}"></div>
-            <div class="form-group"><label>Min Withdraw</label><input type="number" class="form-control" id="minWithdraw" value="${adminConfig.minWithdraw}"></div>
-            <div class="form-group"><label>Max Withdraw</label><input type="number" class="form-control" id="maxWithdraw" value="${adminConfig.maxWithdraw}"></div>
-            <div class="form-group"><label>উইথড্রর জন্য ন্যূনতম রেফার সংখ্যা</label><input type="number" class="form-control" id="minReferralsRequired" value="${adminConfig.minReferralsRequired !== undefined ? adminConfig.minReferralsRequired : 10}" min="0"></div>
-            <div class="form-group"><label>উইথড্র চার্জ (%)</label><input type="number" class="form-control" id="withdrawFeePercent" value="${adminConfig.withdrawFeePercent !== undefined ? adminConfig.withdrawFeePercent : 20}" min="0" max="100" step="0.01"></div>
-            <div class="form-group"><label>প্রতি রেফারে বোনাস (${adminConfig.currency || 'TK'})</label><input type="number" class="form-control" id="referralBonus" value="${adminConfig.referralBonus !== undefined ? adminConfig.referralBonus : 1}" min="0" step="0.01"></div>
-            <div class="form-group"><label>টেলিগ্রাম বট App URL (রেফার লিংকের জন্য)</label><input type="text" class="form-control" id="telegramBotAppUrl" value="${adminConfig.telegramBotAppUrl || 'https://t.me/Go_tasks_ern_bot/app'}"></div>
-          </div>
-          <button class="btn btn-primary" style="margin-top:18px;" onclick="updateGeneral()">Save General</button>
-        </div>
-      `;
+    function getUserBalance() {
+      const user = findOrCreateUser(currentEmail());
+      const val = user.balance;
+      return (val !== undefined && val !== null) ? Number(val) : DEFAULT_BALANCE;
     }
-    window.updateGeneral = function() {
-      adminConfig.appName = document.getElementById('appName').value;
-      adminConfig.appTagline = document.getElementById('appTagline').value;
-      adminConfig.currency = document.getElementById('currency').value;
-      adminConfig.minWithdraw = parseInt(document.getElementById('minWithdraw').value);
-      adminConfig.maxWithdraw = parseInt(document.getElementById('maxWithdraw').value);
-      adminConfig.minReferralsRequired = parseInt(document.getElementById('minReferralsRequired').value) || 0;
-      adminConfig.withdrawFeePercent = parseFloat(document.getElementById('withdrawFeePercent').value) || 0;
-      adminConfig.referralBonus = parseFloat(document.getElementById('referralBonus').value) || 0;
-      adminConfig.telegramBotAppUrl = document.getElementById('telegramBotAppUrl').value.trim() || 'https://t.me/Go_tasks_ern_bot/app';
-      saveConfig();
-    };
 
-    function renderAppearance() {
-      pageTitle.textContent = '🎨 Appearance';
-      dynamicContent.innerHTML = `
-        <div class="card">
-          <div class="section-header"><h3>Color & Branding</h3></div>
-          <div class="form-grid">
-            <div class="form-group"><label>Primary Color</label><input type="color" class="form-control" id="primaryColor" value="${adminConfig.primaryColor}"></div>
-            <div class="form-group"><label>Secondary Color</label><input type="color" class="form-control" id="secondaryColor" value="${adminConfig.secondaryColor}"></div>
-            <div class="form-group"><label>Logo URL</label><input type="text" class="form-control" id="logoUrl" value="${adminConfig.logoUrl}"></div>
-            <div class="form-group"><label>Favicon URL</label><input type="text" class="form-control" id="faviconUrl" value="${adminConfig.faviconUrl}"></div>
-          </div>
-          <button class="btn btn-primary" onclick="updateAppearance()">Save Appearance</button>
-        </div>
-      `;
+    function saveUserBalance(amount) {
+      const email = currentEmail();
+      const users = getUsersStore();
+      const id = 'user_' + email;
+      let user = users.find(u => u.id === id);
+      if (!user) {
+        user = findOrCreateUser(email); // creates & persists
+        return saveUserBalance(amount); // retry now that the user exists in the array
+      }
+      user.balance = amount;
+      saveUsersStore(users);
     }
-    window.updateAppearance = function() {
-      adminConfig.primaryColor = document.getElementById('primaryColor').value;
-      adminConfig.secondaryColor = document.getElementById('secondaryColor').value;
-      adminConfig.logoUrl = document.getElementById('logoUrl').value;
-      adminConfig.faviconUrl = document.getElementById('faviconUrl').value;
-      saveConfig();
-    };
 
-    function renderLinks() {
-      pageTitle.textContent = '🔗 Links & URLs';
-      dynamicContent.innerHTML = `
-        <div class="card">
-          <div class="section-header"><h3>Social & Channels</h3></div>
-          <div class="form-grid">
-            <div class="form-group"><label>Channel 1</label><input class="form-control" id="tg1" value="${adminConfig.telegramChannel1}"></div>
-            <div class="form-group"><label>Channel 2</label><input class="form-control" id="tg2" value="${adminConfig.telegramChannel2}"></div>
-            <div class="form-group"><label>Channel 3</label><input class="form-control" id="tg3" value="${adminConfig.telegramChannel3}"></div>
-            <div class="form-group"><label>YouTube</label><input class="form-control" id="yt" value="${adminConfig.youtubeLink}"></div>
-            <div class="form-group"><label>Facebook</label><input class="form-control" id="fb" value="${adminConfig.facebookLink}"></div>
-          </div>
-          <button class="btn btn-primary" onclick="updateLinks()">Save Links</button>
-        </div>
-      `;
+    function renderReferralInfo() {
+      const user = findOrCreateUser(currentEmail());
+      const referStatEl = document.getElementById('referStatAmount');
+      if (referStatEl) referStatEl.textContent = String(user.referralCount || 0);
+      const botUrl = adminConfig.telegramBotAppUrl || 'https://t.me/Go_tasks_ern_bot/app';
+      const referLinkEl = document.getElementById('referLink');
+      if (referLinkEl) referLinkEl.value = botUrl + '?startapp=' + encodeURIComponent(user.uid);
+      const bonus = (adminConfig.referralBonus !== undefined && adminConfig.referralBonus !== null) ? adminConfig.referralBonus : 1;
+      const bonusTextEl = document.getElementById('referBonusText');
+      if (bonusTextEl) bonusTextEl.textContent = `প্রতি ফ্রেন্ডে ${bonus} ${adminConfig.currency || 'TK'}!`;
+      renderLeaderboard();
     }
-    window.updateLinks = function() {
-      adminConfig.telegramChannel1 = document.getElementById('tg1').value;
-      adminConfig.telegramChannel2 = document.getElementById('tg2').value;
-      adminConfig.telegramChannel3 = document.getElementById('tg3').value;
-      adminConfig.youtubeLink = document.getElementById('yt').value;
-      adminConfig.facebookLink = document.getElementById('fb').value;
-      saveConfig();
-    };
 
-    function renderImages() {
-      pageTitle.textContent = '🖼️ Images & Media';
-      dynamicContent.innerHTML = `
-        <div class="card">
-          <div class="section-header"><h3>Banner & Icons</h3></div>
-          <div class="form-grid">
-            <div class="form-group"><label>Banner URL</label><input class="form-control" id="banner" value="${adminConfig.bannerImage}"></div>
-            <div class="form-group"><label>Task Icon 1</label><input class="form-control" id="taskIcon1" value="${adminConfig.taskIcon1}"></div>
-            <div class="form-group"><label>Task Icon 2</label><input class="form-control" id="taskIcon2" value="${adminConfig.taskIcon2}"></div>
-          </div>
-          <div class="preview-box"><img src="${adminConfig.bannerImage}" onerror="this.style.display='none'"><div style="font-size:0.8rem;color:#888;">Preview</div></div>
-          <button class="btn btn-primary" style="margin-top:14px;" onclick="updateImages()">Save Images</button>
-        </div>
-      `;
+    // ---------- TOP REFERS LEADERBOARD ----------
+    // আগে "Top Refers" কার্ডে সবসময় স্ট্যাটিক "এখনো কোনো রেফার নেই" টেক্সট দেখাত,
+    // কোনো ইউজার কতজনকে রেফার করেছে তা কখনো দেখানো হতো না। এখন সব ইউজারকে
+    // referralCount অনুযায়ী সাজিয়ে (বেশি থেকে কম) টপ ১০ জনকে নাম ও রেফার সংখ্যাসহ দেখায়।
+    // localStorage এখন Firebase realtime listener দিয়ে সবসময় সিঙ্কড থাকে (নিচে attachRealtimeListeners
+    // দেখুন), তাই লিডারবোর্ড এখন সরাসরি লোকাল ক্যাশ থেকেই রেন্ডার করা যায় — আলাদা করে Firebase-এ
+    // আবার fetch করার দরকার নেই, এতে ডুপ্লিকেট রিকোয়েস্ট কমে ও লোডিং আরও দ্রুত হয়।
+    function renderLeaderboard() {
+      const box = document.getElementById('leaderboardList');
+      if (!box) return;
+      let users = [];
+      try { users = getUsersStore(); } catch (e) { users = []; }
+      renderLeaderboardRows(users);
     }
-    window.updateImages = function() {
-      adminConfig.bannerImage = document.getElementById('banner').value;
-      adminConfig.taskIcon1 = document.getElementById('taskIcon1').value;
-      adminConfig.taskIcon2 = document.getElementById('taskIcon2').value;
-      saveConfig();
-    };
 
-    function renderFeatures() {
-      pageTitle.textContent = '🎛️ Feature Toggle';
-      const c = (v) => v ? 'checked' : '';
-      dynamicContent.innerHTML = `
-        <div class="card">
-          <div class="section-header"><h3>Enable / Disable</h3></div>
-          <div style="display:flex; flex-direction:column; gap:18px;">
-            <div class="toggle-switch"><label class="switch"><input type="checkbox" id="enableAds" ${c(adminConfig.enableAds)}><span class="slider"></span></label> <strong>Daily Ads</strong></div>
-            <div class="toggle-switch"><label class="switch"><input type="checkbox" id="enableTasks" ${c(adminConfig.enableTasks)}><span class="slider"></span></label> <strong>Task Center</strong></div>
-            <div class="toggle-switch"><label class="switch"><input type="checkbox" id="enableRefer" ${c(adminConfig.enableRefer)}><span class="slider"></span></label> <strong>Refer System</strong></div>
-            <div class="toggle-switch"><label class="switch"><input type="checkbox" id="enableWithdraw" ${c(adminConfig.enableWithdraw)}><span class="slider"></span></label> <strong>Withdraw</strong></div>
-            <div class="toggle-switch"><label class="switch"><input type="checkbox" id="forceChannelJoin" ${c(adminConfig.forceChannelJoin)}><span class="slider"></span></label> <strong>Force Channel Join</strong></div>
-          </div>
-          <button class="btn btn-primary" style="margin-top:20px;" onclick="updateFeatures()">Save Features</button>
-        </div>
-      `;
+    function renderLeaderboardRows(users) {
+      const box = document.getElementById('leaderboardList');
+      if (!box) return;
+      const top = (users || [])
+        .filter(u => Number(u.referralCount || 0) > 0)
+        .sort((a, b) => Number(b.referralCount || 0) - Number(a.referralCount || 0))
+        .slice(0, 15);
+
+      if (top.length === 0) {
+        box.style.textAlign = 'center';
+        box.style.color = '#888';
+        box.textContent = 'এখনো কোনো রেফার নেই';
+        return;
+      }
+
+      box.style.textAlign = 'left';
+      box.style.color = '';
+      const medals = ['🥇', '🥈', '🥉'];
+      box.innerHTML = top.map((u, i) => {
+        const rankLabel = medals[i] || `${i + 1}.`;
+        const isMe = u.id === currentUserId();
+        return `<div class="leaderboard-row" style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; ${i < top.length - 1 ? 'border-bottom:1px dashed #eee;' : ''}">
+          <span>${rankLabel} ${u.name || 'User'}${isMe ? ' <span style="color:#e52d87; font-size:0.75rem;">(আপনি)</span>' : ''}</span>
+          <span style="font-weight:700; color:#e52d87;">${Number(u.referralCount || 0)} জন</span>
+        </div>`;
+      }).join('');
     }
-    window.updateFeatures = function() {
-      adminConfig.enableAds = document.getElementById('enableAds').checked;
-      adminConfig.enableTasks = document.getElementById('enableTasks').checked;
-      adminConfig.enableRefer = document.getElementById('enableRefer').checked;
-      adminConfig.enableWithdraw = document.getElementById('enableWithdraw').checked;
-      adminConfig.forceChannelJoin = document.getElementById('forceChannelJoin').checked;
-      saveConfig();
-    };
 
-    function renderTasks() {
-      pageTitle.textContent = '📋 Tasks Control';
-      const cardsHtml = adminConfig.tasks.map((t, i) => `
-        <div class="card" style="margin-bottom:16px;">
-          <div class="section-header">
-            <h3>Task ${i+1}</h3>
-            ${t.image ? `<img src="${t.image}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">` : ''}
-          </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Task ${i+1} Title</label>
-              <input class="form-control" id="taskTitle_${i}" value="${t.title}">
-            </div>
-            <div class="form-group">
-              <label>Reward (${adminConfig.currency})</label>
-              <input type="number" class="form-control" id="taskReward_${i}" value="${t.reward}">
-            </div>
-            <div class="form-group">
-              <label>Task Link (URL)</label>
-              <input class="form-control" id="taskLink_${i}" placeholder="https://..." value="${t.link}">
-            </div>
-            <div class="form-group">
-              <label>Task Image Link (URL)</label>
-              <input class="form-control" id="taskImage_${i}" placeholder="https://..." value="${t.image}">
-            </div>
-            <div class="form-group" style="grid-column: 1 / -1;">
-              <label>কাজ কি করতে হবে (নির্দেশনা)</label>
-              <textarea class="form-control" id="taskInstruction_${i}" placeholder="যেমন: চ্যানেলে জয়েন করে স্ক্রিনশট জমা দিন">${t.instruction || ''}</textarea>
-            </div>
-          </div>
-          <button class="btn btn-primary" style="margin-top:14px;" onclick="updateSingleTask(${i})"><i class="fa-solid fa-floppy-disk"></i> Save Task ${i+1}</button>
-        </div>
-      `).join('');
-
-      dynamicContent.innerHTML = `
-        ${cardsHtml}
-        <button class="btn btn-primary" style="margin-top:6px;" onclick="updateTasks()">Save All Tasks</button>
-      `;
+    function renderBalance() {
+      const formatted = Number(getUserBalance()).toFixed(2);
+      const balanceEl = document.getElementById('balanceAmount');
+      if (balanceEl) balanceEl.textContent = formatted;
+      const withdrawStatEl = document.getElementById('withdrawStatAmount');
+      if (withdrawStatEl) withdrawStatEl.textContent = formatted;
     }
-    window.updateSingleTask = function(i) {
-      const t = adminConfig.tasks[i];
-      t.title = document.getElementById(`taskTitle_${i}`).value;
-      t.reward = parseFloat(document.getElementById(`taskReward_${i}`).value) || 0;
-      t.link = document.getElementById(`taskLink_${i}`).value.trim();
-      t.image = document.getElementById(`taskImage_${i}`).value.trim();
-      t.instruction = document.getElementById(`taskInstruction_${i}`).value.trim();
-      saveConfig();
-    };
-    window.updateTasks = function() {
-      adminConfig.tasks.forEach((t, i) => {
-        t.title = document.getElementById(`taskTitle_${i}`).value;
-        t.reward = parseFloat(document.getElementById(`taskReward_${i}`).value) || 0;
-        t.link = document.getElementById(`taskLink_${i}`).value.trim();
-        t.image = document.getElementById(`taskImage_${i}`).value.trim();
-        t.instruction = document.getElementById(`taskInstruction_${i}`).value.trim();
-      });
-      saveConfig();
-    };
+
+    // প্রোফাইল কার্ডে নাম, @username, UID এবং অ্যাভাটার দেখায়
+    function renderProfileHeader() {
+      const user = findOrCreateUser(currentEmail());
+      const displayName = user.name || user.email || 'Guest';
+
+      const nameEl = document.getElementById('profileName');
+      if (nameEl) nameEl.textContent = displayName;
+
+      const handleEl = document.getElementById('profileHandle');
+      if (handleEl) handleEl.textContent = usernameFromEmail(user.email);
+
+      const uidEl = document.getElementById('profileUid');
+      if (uidEl) uidEl.textContent = user.uid || '-';
+
+      const avatarEl = document.getElementById('profileAvatar');
+      if (avatarEl) avatarEl.textContent = displayName.trim().charAt(0).toUpperCase() || '?';
+    }
+
+    function addToUserBalance(amount) {
+      const newBalance = getUserBalance() + amount;
+      saveUserBalance(newBalance);
+      renderBalance();
+    }
+
+    // ---------- AD SLOT 24-HOUR COOLDOWN ----------
+    const AD_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+    let adSlotTimerInterval = null;
+
+    function getSlotMax(slotNumber) {
+      return slotNumber === 1
+        ? (Array.isArray(adminConfig.adSlot1Links) ? adminConfig.adSlot1Links.length : 25)
+        : (Array.isArray(adminConfig.adSlot2Links) ? adminConfig.adSlot2Links.length : 25);
+    }
+
+    function formatRemainingTime(ms) {
+      if (ms < 0) ms = 0;
+      const totalSeconds = Math.floor(ms / 1000);
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
+
+    // Checks if a slot's cooldown has expired and resets it if so.
+    // Returns the (possibly updated) counts object.
+    function resetAdSlotIfExpired(slotNumber, counts) {
+      const slotKey = 'slot' + slotNumber;
+      const completedKey = slotKey + 'CompletedAt';
+      const slotMax = getSlotMax(slotNumber);
+      const current = counts[slotKey] || 0;
+      const completedAt = counts[completedKey];
+
+      if (current >= slotMax && completedAt) {
+        const elapsed = Date.now() - completedAt;
+        if (elapsed >= AD_COOLDOWN_MS) {
+          counts[slotKey] = 0;
+          counts[completedKey] = null;
+          saveAdWatchedCounts(counts);
+        }
+      }
+      return counts;
+    }
 
     function renderAdSlots() {
-      pageTitle.textContent = '📺 Ad Slots';
-      function listHtml(slotKey) {
-        return adminConfig[slotKey].map((link, i) => `
-          <li>
-            <span>#${i+1}: ${link}</span>
-            <button class="btn btn-outline btn-sm" onclick="editAdLink('${slotKey}', ${i})"><i class="fa-solid fa-pen"></i></button>
-          </li>
-        `).join('');
-      }
-      dynamicContent.innerHTML = `
-        <div class="ad-slots-grid">
-          <div class="card">
-            <div class="section-header"><h3>Ad Slot 1 (25 Links)</h3></div>
-            <div style="margin-bottom:12px;">
-              <label>প্রতিটি এড দেখার রিওয়ার্ড (${adminConfig.currency})</label>
-              <input type="number" class="form-control" id="adSlot1RewardInput" value="${adminConfig.adSlot1Reward !== undefined ? adminConfig.adSlot1Reward : 1}" min="0" step="0.01" onchange="updateAdSlotReward(1, this.value)">
-            </div>
-            <div style="margin-bottom:12px;">
-              <label>রিসেট টাইম (ঘন্টা) — সব এড দেখা শেষ হলে কতক্ষণ পর আবার দেখা যাবে</label>
-              <input type="number" class="form-control" id="adSlot1CooldownInput" value="${adminConfig.adSlot1CooldownHours !== undefined ? adminConfig.adSlot1CooldownHours : 24}" min="0" step="1" onchange="updateAdSlotCooldown(1, this.value)">
-            </div>
-            <div style="margin-bottom:12px;">
-              <label>এড দেখার সময় (সেকেন্ড) — ইউজারকে কতক্ষণ এড দেখতে হবে</label>
-              <input type="number" class="form-control" id="adSlot1DurationInput" value="${adminConfig.adSlot1DurationSeconds !== undefined ? adminConfig.adSlot1DurationSeconds : 15}" min="1" step="1" onchange="updateAdSlotDuration(1, this.value)">
-            </div>
-            <ul class="link-list">${listHtml('adSlot1Links')}</ul>
-          </div>
-          <div class="card">
-            <div class="section-header"><h3>Ad Slot 2 (25 Links)</h3></div>
-            <div style="margin-bottom:12px;">
-              <label>প্রতিটি এড দেখার রিওয়ার্ড (${adminConfig.currency})</label>
-              <input type="number" class="form-control" id="adSlot2RewardInput" value="${adminConfig.adSlot2Reward !== undefined ? adminConfig.adSlot2Reward : 1}" min="0" step="0.01" onchange="updateAdSlotReward(2, this.value)">
-            </div>
-            <div style="margin-bottom:12px;">
-              <label>রিসেট টাইম (ঘন্টা) — সব এড দেখা শেষ হলে কতক্ষণ পর আবার দেখা যাবে</label>
-              <input type="number" class="form-control" id="adSlot2CooldownInput" value="${adminConfig.adSlot2CooldownHours !== undefined ? adminConfig.adSlot2CooldownHours : 24}" min="0" step="1" onchange="updateAdSlotCooldown(2, this.value)">
-            </div>
-            <div style="margin-bottom:12px;">
-              <label>এড দেখার সময় (সেকেন্ড) — ইউজারকে কতক্ষণ এড দেখতে হবে</label>
-              <input type="number" class="form-control" id="adSlot2DurationInput" value="${adminConfig.adSlot2DurationSeconds !== undefined ? adminConfig.adSlot2DurationSeconds : 15}" min="1" step="1" onchange="updateAdSlotDuration(2, this.value)">
-            </div>
-            <ul class="link-list">${listHtml('adSlot2Links')}</ul>
-          </div>
-        </div>
-      `;
-    }
-    window.updateAdSlotReward = function(slotNumber, value) {
-      const reward = parseFloat(value) || 0;
-      adminConfig['adSlot' + slotNumber + 'Reward'] = reward;
-      saveConfig();
-    };
-    window.updateAdSlotCooldown = function(slotNumber, value) {
-      let hours = parseFloat(value);
-      if (isNaN(hours) || hours < 0) hours = 0;
-      adminConfig['adSlot' + slotNumber + 'CooldownHours'] = hours;
-      saveConfig();
-    };
-    window.updateAdSlotDuration = function(slotNumber, value) {
-      let seconds = parseInt(value);
-      if (isNaN(seconds) || seconds < 1) seconds = 1;
-      adminConfig['adSlot' + slotNumber + 'DurationSeconds'] = seconds;
-      saveConfig();
-    };
-    window.editAdLink = function(slotKey, index) {
-      const newLink = prompt('নতুন লিংক দিন:', adminConfig[slotKey][index]);
-      if (newLink !== null && newLink.trim() !== '') {
-        adminConfig[slotKey][index] = newLink.trim();
-        saveConfig();
-        renderAdSlots();
-      }
-    };
+      let counts = getAdWatchedCounts();
+      counts = resetAdSlotIfExpired(1, counts);
+      counts = resetAdSlotIfExpired(2, counts);
 
-    // ====================== WITHDRAW REQUESTS ======================
-    function updatePendingBadge() {
-      const pendingCount = withdrawRequests.filter(r => r.status === 'pending').length;
-      const badge = document.getElementById('pendingBadge');
-      if (pendingCount > 0) {
-        badge.style.display = 'inline-block';
-        badge.textContent = pendingCount;
-      } else {
-        badge.style.display = 'none';
-      }
+      [1, 2].forEach(function(slotNumber) {
+        const slotKey = 'slot' + slotNumber;
+        const completedKey = slotKey + 'CompletedAt';
+        const slotMax = getSlotMax(slotNumber);
+        const watched = Math.min(counts[slotKey] || 0, slotMax);
+        const completedAt = counts[completedKey];
+
+        const countEl = document.getElementById('adSlot' + slotNumber + 'Count');
+        if (countEl) countEl.textContent = `${watched}/${slotMax} Watched`;
+
+        const timerEl = document.getElementById('adSlot' + slotNumber + 'Timer');
+        const cardEl = document.getElementById('adSlot' + slotNumber + 'Card');
+
+        if (watched >= slotMax && completedAt) {
+          const remaining = AD_COOLDOWN_MS - (Date.now() - completedAt);
+          if (timerEl) {
+            timerEl.style.display = 'block';
+            timerEl.textContent = `⏳ পরবর্তী এডের জন্য বাকি: ${formatRemainingTime(remaining)}`;
+          }
+          if (cardEl) cardEl.style.opacity = '0.6';
+        } else {
+          if (timerEl) {
+            timerEl.style.display = 'none';
+            timerEl.textContent = '';
+          }
+          if (cardEl) cardEl.style.opacity = '1';
+        }
+      });
     }
 
-    function findUser(userId) {
-      return users.find(u => u.id === userId);
+    function startAdSlotTimers() {
+      if (adSlotTimerInterval) return;
+      adSlotTimerInterval = setInterval(renderAdSlots, 1000);
     }
 
-    function renderWithdraw() {
-      pageTitle.textContent = '💸 Withdraw Requests';
-      updatePendingBadge();
-
-      const pendingCount = withdrawRequests.filter(r => r.status === 'pending').length;
-      const approvedCount = withdrawRequests.filter(r => r.status === 'approved').length;
-      const rejectedCount = withdrawRequests.filter(r => r.status === 'rejected').length;
-      const totalPendingAmount = withdrawRequests.filter(r => r.status === 'pending').reduce((s,r)=>s+r.amount,0);
-
-      const filtered = currentFilter === 'all' ? withdrawRequests : withdrawRequests.filter(r => r.status === currentFilter);
-      const sorted = [...filtered].sort((a,b) => new Date(b.date) - new Date(a.date));
-
-      const rowsHtml = sorted.length ? sorted.map(r => {
-        const initials = r.userName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-        const statusClass = r.status === 'pending' ? 'status-pending' : r.status === 'approved' ? 'status-approved' : 'status-rejected';
-        const statusLabel = r.status === 'pending' ? 'পেন্ডিং' : r.status === 'approved' ? 'এপ্রুভড' : 'রিজেক্টেড';
-        return `
-          <tr>
-            <td>
-              <div class="user-mini">
-                <div class="user-avatar">${initials}</div>
-                <div>
-                  <div style="font-weight:600;">${r.userName}</div>
-                  <div style="font-size:0.78rem;color:var(--muted);">${r.phone}</div>
-                </div>
-              </div>
-            </td>
-            <td style="font-weight:700;color:var(--primary);">${r.amount} ${adminConfig.currency}</td>
-            <td>${r.method}<br><span style="font-size:0.78rem;color:var(--muted);">${r.number}</span></td>
-            <td>${r.date}</td>
-            <td><span class="status-pill ${statusClass}">${statusLabel}</span></td>
-            <td>
-              <div class="action-btns">
-                ${r.status === 'pending' ? `
-                  <button class="btn btn-success btn-sm" onclick="openDecision('${r.id}', 'approved')"><i class="fa-solid fa-check"></i> এপ্রুভ</button>
-                  <button class="btn btn-danger btn-sm" onclick="openDecision('${r.id}', 'rejected')"><i class="fa-solid fa-xmark"></i> রিজেক্ট</button>
-                ` : `<button class="btn btn-outline btn-sm" onclick="viewUserHistory('${r.userId}')"><i class="fa-solid fa-eye"></i> দেখুন</button>`}
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('') : `<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-inbox"></i><div>কোনো রিকোয়েস্ট নেই</div></div></td></tr>`;
-
-      dynamicContent.innerHTML = `
-        <div class="stats-row">
-          <div class="stat-box"><div class="num">${pendingCount}</div><div class="lbl">পেন্ডিং রিকোয়েস্ট</div></div>
-          <div class="stat-box"><div class="num">${totalPendingAmount} ${adminConfig.currency}</div><div class="lbl">পেন্ডিং টোটাল</div></div>
-          <div class="stat-box"><div class="num">${approvedCount}</div><div class="lbl">এপ্রুভড</div></div>
-          <div class="stat-box"><div class="num">${rejectedCount}</div><div class="lbl">রিজেক্টেড</div></div>
-        </div>
-        <div class="card">
-          <div class="section-header">
-            <h3>রিকোয়েস্ট লিস্ট</h3>
-          </div>
-          <div class="filter-tabs">
-            <button class="filter-tab ${currentFilter==='pending'?'active':''}" onclick="setWithdrawFilter('pending')">পেন্ডিং (${pendingCount})</button>
-            <button class="filter-tab ${currentFilter==='approved'?'active':''}" onclick="setWithdrawFilter('approved')">এপ্রুভড</button>
-            <button class="filter-tab ${currentFilter==='rejected'?'active':''}" onclick="setWithdrawFilter('rejected')">রিজেক্টেড</button>
-            <button class="filter-tab ${currentFilter==='all'?'active':''}" onclick="setWithdrawFilter('all')">সব</button>
-          </div>
-          <div class="req-table-wrap">
-            <table class="req-table">
-              <thead><tr><th>ইউজার</th><th>পরিমাণ</th><th>মেথড</th><th>তারিখ</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead>
-              <tbody>${rowsHtml}</tbody>
-            </table>
-          </div>
-        </div>
-      `;
-    }
-
-    window.setWithdrawFilter = function(filter) {
-      currentFilter = filter;
-      renderWithdraw();
-    };
-
-    window.openDecision = function(reqId, decision) {
-      const req = withdrawRequests.find(r => r.id === reqId);
-      if (!req) return;
-      const user = findUser(req.userId);
-      const modal = document.getElementById('reqModal');
-      const body = document.getElementById('reqModalBody');
-
-      if (decision === 'approved') {
-        body.innerHTML = `
-          <h4>✅ উইথড্র এপ্রুভ করবেন?</h4>
-          <div class="modal-row"><span>ইউজার</span><strong>${req.userName}</strong></div>
-          <div class="modal-row"><span>পরিমাণ</span><strong>${req.amount} ${adminConfig.currency}</strong></div>
-          <div class="modal-row"><span>মেথড</span><strong>${req.method} - ${req.number}</strong></div>
-          <div class="modal-row"><span>ইউজারের ব্যালেন্স</span><strong>${user ? user.balance : 'N/A'} ${adminConfig.currency}</strong></div>
-          <p style="font-size:0.85rem;color:var(--muted);margin-top:12px;">এপ্রুভ করলে এই পরিমাণ টাকা ইউজারকে পাঠানো হয়েছে বলে গণ্য হবে এবং তার ব্যালেন্স থেকে কেটে নেওয়া হবে।</p>
-          <div class="modal-actions">
-            <button class="btn btn-outline" onclick="closeModal()">বাতিল</button>
-            <button class="btn btn-success" onclick="confirmDecision('${reqId}','approved')">নিশ্চিত এপ্রুভ</button>
-          </div>
-        `;
-      } else {
-        body.innerHTML = `
-          <h4>❌ উইথড্র রিজেক্ট করবেন?</h4>
-          <div class="modal-row"><span>ইউজার</span><strong>${req.userName}</strong></div>
-          <div class="modal-row"><span>পরিমাণ</span><strong>${req.amount} ${adminConfig.currency}</strong></div>
-          <div class="form-group" style="margin-top:14px;">
-            <label>রিজেক্ট করার কারণ</label>
-            <textarea class="form-control" id="rejectReason" placeholder="যেমন: ভুল নাম্বার, সন্দেহজনক একাউন্ট ইত্যাদি"></textarea>
-          </div>
-          <p style="font-size:0.85rem;color:var(--muted);margin-top:8px;">রিজেক্ট করলে ইউজারের ব্যালেন্সে কোনো পরিবর্তন হবে না, কারণ টাকা শুধু এপ্রুভ করলেই কাটা হয়।</p>
-          <div class="modal-actions">
-            <button class="btn btn-outline" onclick="closeModal()">বাতিল</button>
-            <button class="btn btn-danger" onclick="confirmDecision('${reqId}','rejected')">নিশ্চিত রিজেক্ট</button>
-          </div>
-        `;
-      }
-      modal.classList.add('show');
-    };
-
-    window.confirmDecision = function(reqId, decision) {
-      const req = withdrawRequests.find(r => r.id === reqId);
-      if (!req) return;
-
-      if (decision === 'rejected') {
-        const reasonEl = document.getElementById('rejectReason');
-        req.reason = reasonEl ? reasonEl.value.trim() : '';
-        // টাকা এপ্রুভ না হওয়া পর্যন্ত ব্যালেন্স থেকে কাটা হয় না, তাই রিজেক্ট করলে ব্যালেন্সে কিছু ফেরত দেওয়ার দরকার নেই।
-      } else {
-        // গুরুত্বপূর্ণ: ইউজার যখন উইথড্র রিকোয়েস্ট সাবমিট করে (মূল অ্যাপ থেকে), তখনই তার ব্যালেন্স
-        // থেকে টাকা কেটে নেওয়া হয় এবং totalWithdrawn বাড়ানো হয় (যাতে একই টাকা দুইবার তোলা না যায়)।
-        // তাই এখানে এপ্রুভ করার সময় আবার ব্যালেন্স চেক/কাটা করলে সেটা ডাবল-ডিডাকশন হয়ে যায় এবং
-        // ব্যালেন্স কম দেখিয়ে এপ্রুভ আটকে যায়। এপ্রুভ করার সময় শুধু স্ট্যাটাস পরিবর্তন করাই যথেষ্ট।
-      }
-      req.status = decision;
-      persistUsersAndWithdraws();
-      closeModal();
-      showToast(decision === 'approved' ? '✅ উইথড্র এপ্রুভ করা হয়েছে' : '❌ উইথড্র রিজেক্ট করা হয়েছে');
-      renderWithdraw();
-    };
-
-    window.closeModal = function() {
-      document.getElementById('reqModal').classList.remove('show');
-    };
-
-    // ====================== USERS & BALANCE ======================
-    function renderUsers() {
-      pageTitle.textContent = '👥 Users & Balance';
-      const totalBalance = users.reduce((s,u)=>s+u.balance,0);
-      const totalUsers = users.length;
-
-      const rows = users.map(u => {
-        const initials = u.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-        return `
-          <tr>
-            <td>
-              <div class="user-mini">
-                <div class="user-avatar">${initials}</div>
-                <div>
-                  <div style="font-weight:600;">${u.name}</div>
-                  <div style="font-size:0.78rem;color:var(--muted);">${u.phone}</div>
-                </div>
-              </div>
-            </td>
-            <td>
-              <div style="font-size:0.85rem;font-weight:600;">${u.id}</div>
-            </td>
-            <td style="font-weight:700;color:var(--primary);">${u.balance} ${adminConfig.currency}</td>
-            <td>${u.totalEarned} ${adminConfig.currency}</td>
-            <td>${u.totalWithdrawn} ${adminConfig.currency}</td>
-            <td>${u.joined}</td>
-            <td>
-              <button class="btn btn-outline btn-sm" onclick="viewUserHistory('${u.id}')"><i class="fa-solid fa-eye"></i> হিস্ট্রি</button>
-              <button class="btn btn-primary btn-sm" onclick="addUserBalance('${u.id}')"><i class="fa-solid fa-plus"></i> ব্যালেন্স যোগ</button>
-              <button class="btn btn-danger btn-sm" onclick="deductUserBalance('${u.id}')"><i class="fa-solid fa-minus"></i> ব্যালেন্স কাটুন</button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-
-      dynamicContent.innerHTML = `
-        <div class="stats-row">
-          <div class="stat-box"><div class="num">${totalUsers}</div><div class="lbl">টোটাল ইউজার</div></div>
-          <div class="stat-box"><div class="num">${totalBalance} ${adminConfig.currency}</div><div class="lbl">টোটাল ব্যালেন্স</div></div>
-        </div>
-        <div class="card">
-          <div class="section-header"><h3>সব ইউজার</h3></div>
-          <div class="req-table-wrap">
-            <table class="req-table">
-              <thead><tr><th>ইউজার</th><th>UID</th><th>ব্যালেন্স</th><th>মোট আয়</th><th>মোট উইথড্র</th><th>জয়েন</th><th>একশন</th></tr></thead>
-              <tbody>${rows}</tbody>
-            </table>
-          </div>
-        </div>
-      `;
-    }
-
-    window.addUserBalance = function(userId) {
-      const user = findUser(userId);
-      if (!user) return;
-      const input = prompt(`${user.name} এর ব্যালেন্সে কত টাকা যোগ করতে চান?`, '0');
-      if (input === null) return;
-      const amount = parseFloat(input);
-      if (isNaN(amount) || amount === 0) {
-        alert('সঠিক একটি পরিমাণ দিন');
-        return;
-      }
-      user.balance = (user.balance || 0) + amount;
-      if (amount > 0) {
-        user.totalEarned = (user.totalEarned || 0) + amount;
-      }
-      persistUsersAndWithdraws();
-      renderUsers();
-      alert(`${user.name} এর ব্যালেন্সে ${amount} ${adminConfig.currency} যোগ হয়েছে। নতুন ব্যালেন্স: ${user.balance} ${adminConfig.currency}`);
-    };
-
-    window.deductUserBalance = function(userId) {
-      const user = findUser(userId);
-      if (!user) return;
-      const input = prompt(`${user.name} এর ব্যালেন্স থেকে কত টাকা কাটতে চান?`, '0');
-      if (input === null) return;
-      const amount = parseFloat(input);
-      if (isNaN(amount) || amount <= 0) {
-        alert('সঠিক একটি পরিমাণ দিন');
-        return;
-      }
-      const currentBalance = user.balance || 0;
-      if (amount > currentBalance) {
-        alert(`ইউজারের ব্যালেন্সে যথেষ্ট টাকা নেই। বর্তমান ব্যালেন্স: ${currentBalance} ${adminConfig.currency}`);
-        return;
-      }
-      user.balance = currentBalance - amount;
-      persistUsersAndWithdraws();
-      renderUsers();
-      alert(`${user.name} এর ব্যালেন্স থেকে ${amount} ${adminConfig.currency} কাটা হয়েছে। নতুন ব্যালেন্স: ${user.balance} ${adminConfig.currency}`);
-    };
-
-    window.viewUserHistory = function(userId) {
-      const user = findUser(userId);
-      if (!user) return;
-      const history = withdrawRequests.filter(r => r.userId === userId).sort((a,b)=> new Date(b.date)-new Date(a.date));
-
-      const modal = document.getElementById('reqModal');
-      const body = document.getElementById('reqModalBody');
-      const historyHtml = history.length ? history.map(r => {
-        const statusClass = r.status === 'pending' ? 'status-pending' : r.status === 'approved' ? 'status-approved' : 'status-rejected';
-        const statusLabel = r.status === 'pending' ? 'পেন্ডিং' : r.status === 'approved' ? 'এপ্রুভড' : 'রিজেক্টেড';
-        return `<div class="history-item">
-          <span>${r.date}<br><span style="color:var(--muted);">${r.method}</span></span>
-          <span>${r.amount} ${adminConfig.currency}</span>
-          <span class="status-pill ${statusClass}">${statusLabel}</span>
-        </div>`;
-      }).join('') : `<div class="empty-state"><i class="fa-solid fa-inbox"></i><div>কোনো হিস্ট্রি নেই</div></div>`;
-
-      body.innerHTML = `
-        <h4>${user.name} এর হিস্ট্রি</h4>
-        <div class="modal-row"><span>বর্তমান ব্যালেন্স</span><strong>${user.balance} ${adminConfig.currency}</strong></div>
-        <div class="modal-row"><span>মোট আয়</span><strong>${user.totalEarned} ${adminConfig.currency}</strong></div>
-        <div class="modal-row"><span>মোট উইথড্র</span><strong>${user.totalWithdrawn} ${adminConfig.currency}</strong></div>
-        <div class="history-list">${historyHtml}</div>
-        <div class="modal-actions">
-          <button class="btn btn-outline" style="flex:1;" onclick="closeModal()">বন্ধ করুন</button>
-        </div>
-      `;
-      modal.classList.add('show');
-    };
-
-    function showToast(msg) {
-      const toast = document.getElementById('adminToast');
-      toast.textContent = msg;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2500);
-    }
-
-    // ====================== TASK SCREENSHOT SUBMISSIONS ======================
-    function getSubmissions() {
+    function getTaskSubmissions() {
       try {
         return JSON.parse(localStorage.getItem('mahim_task_submissions') || '[]');
       } catch (e) {
@@ -1572,272 +1887,817 @@
       }
     }
 
-    function saveSubmissions(list) {
-      localStorage.setItem('mahim_task_submissions', JSON.stringify(list));
-      syncSubmissionsToFirebase(list);
+    // লগইন করা ইমেইল সবসময় sessionStorage থেকে নেওয়া হয়, ইনপুট বক্স থেকে না —
+    // কারণ পেজ রিলোড হলে ইনপুট বক্স খালি থাকে, কিন্তু sessionStorage-এ লগইন তথ্য থেকেই যায়।
+    // এই বাগের কারণেই আগে রিলোডের পর ব্যালেন্স/টাস্ক ভুল (ডেমো ইউজারের) দেখাত।
+    function currentEmail() {
+      const stored = sessionStorage.getItem('mahim_current_email');
+      const fromInput = emailInput && emailInput.value ? emailInput.value.trim() : '';
+      return (stored || fromInput || 'demo').toLowerCase();
     }
 
-    function updateSubmissionsBadge() {
-      const submissions = getSubmissions();
-      const pendingCount = submissions.filter(s => s.status === 'pending').length;
-      const badge = document.getElementById('submissionsBadge');
-      if (!badge) return;
-      if (pendingCount > 0) {
-        badge.style.display = 'inline-block';
-        badge.textContent = pendingCount;
+    function currentUserId() {
+      return 'user_' + currentEmail();
+    }
+
+    function getAdWatchedCounts() {
+      try {
+        const all = JSON.parse(localStorage.getItem('mahim_ad_watched') || '{}');
+        const data = all[currentUserId()] || { slot1: 0, slot2: 0, slot1CompletedAt: null, slot2CompletedAt: null };
+        if (data.slot1CompletedAt === undefined) data.slot1CompletedAt = null;
+        if (data.slot2CompletedAt === undefined) data.slot2CompletedAt = null;
+        return data;
+      } catch (e) {
+        return { slot1: 0, slot2: 0, slot1CompletedAt: null, slot2CompletedAt: null };
+      }
+    }
+
+    function saveAdWatchedCounts(counts) {
+      let all = {};
+      try {
+        all = JSON.parse(localStorage.getItem('mahim_ad_watched') || '{}');
+      } catch (e) {
+        all = {};
+      }
+      all[currentUserId()] = counts;
+      localStorage.setItem('mahim_ad_watched', JSON.stringify(all));
+    }
+
+    // ---------- AD WATCH COUNTDOWN (reward only credited after full duration is watched) ----------
+    let adWatchTimerInterval = null;
+    let adWatchActiveSlot = null;
+    const AW_RING_CIRC = 2 * Math.PI * 52; // matches r=52 in the SVG ring
+
+    function getSlotDurationSeconds(slotNumber) {
+      const key = 'adSlot' + slotNumber + 'DurationSeconds';
+      const val = adminConfig[key];
+      return (val !== undefined && val !== null && Number(val) > 0) ? Number(val) : 15;
+    }
+
+    window.watchAdSlot = function(slotNumber) {
+      if (adWatchActiveSlot !== null) {
+        showToast('এড ইতিমধ্যে চলছে, শেষ হওয়া পর্যন্ত অপেক্ষা করুন');
+        return;
+      }
+
+      const slotKey = 'slot' + slotNumber;
+      const completedKey = slotKey + 'CompletedAt';
+      const slotMax = getSlotMax(slotNumber);
+
+      let counts = getAdWatchedCounts();
+      counts = resetAdSlotIfExpired(slotNumber, counts);
+      const current = counts[slotKey] || 0;
+
+      if (current >= slotMax) {
+        const completedAt = counts[completedKey];
+        if (completedAt) {
+          const remaining = AD_COOLDOWN_MS - (Date.now() - completedAt);
+          showToast(`Ad Slot ${slotNumber} আবার দেখতে বাকি সময়: ${formatRemainingTime(remaining)}`);
+        } else {
+          showToast(`Ad Slot ${slotNumber} এর সবগুলো এড দেখা হয়ে গেছে`);
+        }
+        renderAdSlots();
+        return;
+      }
+
+      // এডমিন প্যানেলে যে লিংক এই স্লটের জন্য সেট করা আছে সেটাই এখন আসল Ad হিসেবে
+      // নতুন ট্যাবে খুলবে। আগে এই লাইনটা মিসিং ছিল, তাই ক্লিক করলে শুধু কাউন্টডাউন
+      // চলতো কিন্তু কোনো এড আসলে ওপেনই হতো না।
+      const links = slotNumber === 1 ? adminConfig.adSlot1Links : adminConfig.adSlot2Links;
+      const adLink = Array.isArray(links) ? links[current] : null;
+      if (adLink) {
+        window.open(adLink, '_blank');
       } else {
-        badge.style.display = 'none';
+        showToast(`Ad Slot ${slotNumber} এর জন্য এডমিন এখনো কোনো এড লিংক সেট করেননি`);
+        return;
+      }
+
+      startAdWatchCountdown(slotNumber);
+    };
+
+    function startAdWatchCountdown(slotNumber) {
+      const totalSeconds = getSlotDurationSeconds(slotNumber);
+      const reward = slotNumber === 1
+        ? ((adminConfig.adSlot1Reward !== undefined && adminConfig.adSlot1Reward !== null) ? adminConfig.adSlot1Reward : 1)
+        : ((adminConfig.adSlot2Reward !== undefined && adminConfig.adSlot2Reward !== null) ? adminConfig.adSlot2Reward : 1);
+
+      adWatchActiveSlot = slotNumber;
+      let remainingSeconds = totalSeconds;
+
+      const titleEl = document.getElementById('adWatchModalTitle');
+      const countEl = document.getElementById('adWatchCountText');
+      const ringEl = document.getElementById('adWatchRingFg');
+      const noteEl = document.getElementById('adWatchRewardNote');
+      const overlay = document.getElementById('adWatchModalOverlay');
+
+      if (titleEl) titleEl.textContent = `Ad Slot ${slotNumber} চলছে...`;
+      if (noteEl) noteEl.textContent = `সম্পূর্ণ হলে পাবেন +৳${Number(reward).toFixed(2)}`;
+      if (ringEl) {
+        ringEl.style.strokeDasharray = `${AW_RING_CIRC}`;
+        ringEl.style.strokeDashoffset = `0`;
+      }
+      if (countEl) countEl.textContent = remainingSeconds;
+      if (overlay) overlay.classList.add('show');
+
+      if (adWatchTimerInterval) clearInterval(adWatchTimerInterval);
+      adWatchTimerInterval = setInterval(function() {
+        remainingSeconds -= 1;
+        if (countEl) countEl.textContent = Math.max(remainingSeconds, 0);
+        if (ringEl) {
+          const progress = Math.max(0, remainingSeconds) / totalSeconds;
+          ringEl.style.strokeDashoffset = `${AW_RING_CIRC * (1 - progress)}`;
+        }
+        if (remainingSeconds <= 0) {
+          clearInterval(adWatchTimerInterval);
+          adWatchTimerInterval = null;
+          finishAdWatch(slotNumber, reward);
+        }
+      }, 1000);
+    }
+
+    function finishAdWatch(slotNumber, reward) {
+      const slotKey = 'slot' + slotNumber;
+      const completedKey = slotKey + 'CompletedAt';
+      const slotMax = getSlotMax(slotNumber);
+
+      let counts = getAdWatchedCounts();
+      counts = resetAdSlotIfExpired(slotNumber, counts);
+      const current = counts[slotKey] || 0;
+
+      counts[slotKey] = current + 1;
+      if (counts[slotKey] >= slotMax) {
+        counts[completedKey] = Date.now();
+      }
+      saveAdWatchedCounts(counts);
+
+      // Balance বাড়বে শুধুমাত্র পুরো সময় এড দেখা সম্পূর্ণ হওয়ার পরেই, অটোমেটিক ভাবে
+      addToUserBalance(Number(reward));
+
+      // নোট: আগে এখানে Ad দেখা সম্পূর্ণ হলেই রেফারেল কনফার্ম হয়ে যেত (confirmReferralIfPending)।
+      // এখন রেফারেল কনফার্মেশন আর Ad দেখার উপর নির্ভর করে না — ১০টা টাস্কের মধ্যে যেকোনো একটা
+      // টাস্ক এডমিন কর্তৃক অ্যাপ্রুভড/কমপ্লিট হলে কনফার্ম হয় (দেখুন processApprovedTaskSubmissions)।
+
+      const overlay = document.getElementById('adWatchModalOverlay');
+      if (overlay) overlay.classList.remove('show');
+      adWatchActiveSlot = null;
+
+      renderAdSlots();
+      showToast(`Ad Slot ${slotNumber} সম্পূর্ণ হয়েছে! +৳${Number(reward).toFixed(2)} যোগ হয়েছে`);
+    }
+
+    // ---------- টাস্ক অ্যাপ্রুভ হলে অটোমেটিক টাকা পাওয়া ----------
+    // এডমিন প্যানেল থেকে যখন কোনো স্ক্রিনশট সাবমিশন "approved" করা হয়, তখন সেটা Realtime শোনা যায়
+    // (attachRealtimeListeners), কিন্তু আগে এই স্ট্যাটাস আপডেট হলেও ইউজারের ব্যালেন্সে টাকা যোগ হতো না।
+    // এই ফাংশন প্রতিবার সাবমিশন লিস্ট রিফ্রেশ হলে চেক করে — বর্তমান ইউজারের যেকোনো "approved" এবং
+    // এখনো টাকা না-দেওয়া (rewarded ফ্ল্যাগ ছাড়া) সাবমিশন থাকলে তার টাস্ক-রিওয়ার্ড ব্যালেন্সে যোগ করে
+    // এবং rewarded=true করে সেভ করে দেয়, যাতে দ্বিতীয়বার একই টাস্কের জন্য আবার টাকা যোগ না হয়।
+    // এভাবে যেকোনো একটা টাস্ক (১০টার মধ্যে যেকোনো একটা) সম্পূর্ণ/অ্যাপ্রুভ হলেই ইউজার টাকা পাবে,
+    // এবং সেটাই এখন রেফারেল কনফার্মেশনেরও (রেফারারকে বোনাস) আসল ট্রিগার — শুধু টাস্ক দেখাই যথেষ্ট নয়,
+    // টাস্কটা এডমিনের কাছে অ্যাপ্রুভড/কমপ্লিট হতে হবে।
+    function processApprovedTaskSubmissions() {
+      try {
+        const uid = currentUserId();
+        const submissions = getTaskSubmissions();
+        const myApprovedUnpaid = submissions.filter(s => s.userId === uid && s.status === 'approved' && !s.rewarded);
+        if (myApprovedUnpaid.length === 0) return;
+
+        myApprovedUnpaid.forEach(s => {
+          const amount = Number(s.reward || 0);
+          if (amount > 0) addToUserBalance(amount);
+          s.rewarded = true;
+          showToast(`"${s.taskTitle || 'টাস্ক'}" সম্পূর্ণ! +৳${amount.toFixed(2)} যোগ হয়েছে`);
+        });
+
+        localStorage.setItem('mahim_task_submissions', JSON.stringify(submissions));
+        syncSubmissionToFirebase(myApprovedUnpaid);
+
+        // যেকোনো একটা টাস্ক কমপ্লিট/অ্যাপ্রুভড হয়ে গেলে রেফারেল কনফার্ম করে রেফারারকে বোনাস দাও
+        confirmReferralIfPending();
+
+        renderBalance();
+        renderProfileHeader();
+      } catch (e) {
+        console.warn('Could not process approved task submissions', e);
       }
     }
 
-    // Live-check for newly submitted user screenshots so the admin is notified
-    // immediately (badge + toast) without needing to manually refresh/reload.
-    let lastKnownPendingCount = 0;
-    function checkForNewScreenshotSubmissions() {
-      const pendingCount = getSubmissions().filter(s => s.status === 'pending').length;
-      if (pendingCount > lastKnownPendingCount) {
-        const newOnes = pendingCount - lastKnownPendingCount;
-        showToast(`📷 নতুন ${newOnes}টি স্ক্রিনশট জমা পড়েছে! মোট পেন্ডিং: ${pendingCount}`);
+    function renderTasks() {
+      processApprovedTaskSubmissions();
+      const container = document.getElementById('taskListContainer');
+      if (!container) return;
+      const tasks = Array.isArray(adminConfig.tasks) ? adminConfig.tasks : [];
+      if (tasks.length === 0) {
+        container.innerHTML = `<div class="card" style="text-align:center; color:#888;">এখন কোনো টাস্ক নেই</div>`;
+        return;
       }
-      lastKnownPendingCount = pendingCount;
-      updateSubmissionsBadge();
-      if (currentSection === 'submissions') {
-        renderSubmissions();
-      }
-    }
-
-    let submissionsFilter = 'pending';
-
-    function renderSubmissions() {
-      pageTitle.textContent = '📷 Task Screenshots';
-      const submissions = getSubmissions();
-      updateSubmissionsBadge();
-
-      const pendingCount = submissions.filter(s => s.status === 'pending').length;
-      const approvedCount = submissions.filter(s => s.status === 'approved').length;
-      const rejectedCount = submissions.filter(s => s.status === 'rejected').length;
-
-      const filtered = submissionsFilter === 'all' ? submissions : submissions.filter(s => s.status === submissionsFilter);
-      const sorted = [...filtered].sort((a,b) => (b.date||'').localeCompare(a.date||''));
-
-      const cardsHtml = sorted.length ? sorted.map(s => {
-        const statusClass = s.status === 'pending' ? 'status-pending' : s.status === 'approved' ? 'status-approved' : 'status-rejected';
-        const statusLabel = s.status === 'pending' ? 'পেন্ডিং' : s.status === 'approved' ? 'এপ্রুভড' : 'রিজেক্টেড';
-        const img = s.image || '';
+      const submissions = getTaskSubmissions();
+      const uid = currentUserId();
+      container.innerHTML = tasks.map((t, i) => {
+        const iconHtml = t.image
+          ? `<img src="${t.image}" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-list-check\\'></i>'">`
+          : `<i class="fa-solid fa-list-check"></i>`;
+        const reward = (t.reward !== undefined && t.reward !== null) ? t.reward : 0;
+        const mySub = submissions.filter(s => s.userId === uid && s.taskIndex === i).sort((a,b)=> b.date.localeCompare(a.date))[0];
+        let ssButtonHtml = `<button class="btn-ss" onclick="openScreenshotModal(${i})"><i class="fa-solid fa-camera"></i> সাবমিট বাটন</button>`;
+        if (mySub) {
+          const label = mySub.status === 'approved' ? 'অ্যাপ্রুভড' : mySub.status === 'rejected' ? 'রিজেক্টেড' : 'রিভিউ চলছে';
+          ssButtonHtml = `<span class="ss-pill ${mySub.status}">${label}</span>`;
+          if (mySub.status === 'rejected') {
+            ssButtonHtml += `<button class="btn-ss" style="margin-top:6px;" onclick="openScreenshotModal(${i})"><i class="fa-solid fa-camera"></i> আবার দিন</button>`;
+          }
+        }
         return `
-          <div class="ss-card">
-            <img src="${img}" onclick="openSsFullview('${s.id}')" onerror="this.style.opacity='0.3'">
-            <div class="ss-card-title">${s.taskTitle || 'Task'}</div>
-            <div class="ss-card-meta">${s.userName || s.userId || ''} • ${s.date || ''}</div>
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-              <span class="status-pill ${statusClass}">${statusLabel}</span>
-              ${s.status === 'pending' ? `
-                <div class="action-btns">
-                  <button class="btn btn-success btn-sm" onclick="decideSubmission('${s.id}','approved')"><i class="fa-solid fa-check"></i></button>
-                  <button class="btn btn-danger btn-sm" onclick="decideSubmission('${s.id}','rejected')"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-              ` : ''}
+          <div class="task-item">
+            <div class="task-info">
+              <div class="task-icon">${iconHtml}</div>
+              <div class="task-details"><h4>${t.title || 'Task ' + (i+1)}</h4><p>৳ ${Number(reward).toFixed(2)}</p></div>
+            </div>
+            <div class="task-actions">
+              <button class="btn-task" onclick="openTask(${i})">কাজটি দেখুন</button>
+              ${ssButtonHtml}
             </div>
           </div>
         `;
-      }).join('') : `<div class="empty-state"><i class="fa-solid fa-camera-retro"></i><div>কোনো স্ক্রিনশট নেই</div></div>`;
-
-      dynamicContent.innerHTML = `
-        <div class="stats-row">
-          <div class="stat-box"><div class="num">${pendingCount}</div><div class="lbl">পেন্ডিং স্ক্রিনশট</div></div>
-          <div class="stat-box"><div class="num">${approvedCount}</div><div class="lbl">এপ্রুভড</div></div>
-          <div class="stat-box"><div class="num">${rejectedCount}</div><div class="lbl">রিজেক্টেড</div></div>
-          <div class="stat-box"><div class="num">${submissions.length}</div><div class="lbl">সর্বমোট</div></div>
-        </div>
-        <div class="card">
-          <div class="section-header"><h3>ইউজারদের জমা দেওয়া স্ক্রিনশট</h3></div>
-          <div class="filter-tabs">
-            <button class="filter-tab ${submissionsFilter==='pending'?'active':''}" onclick="setSubmissionsFilter('pending')">পেন্ডিং (${pendingCount})</button>
-            <button class="filter-tab ${submissionsFilter==='approved'?'active':''}" onclick="setSubmissionsFilter('approved')">এপ্রুভড</button>
-            <button class="filter-tab ${submissionsFilter==='rejected'?'active':''}" onclick="setSubmissionsFilter('rejected')">রিজেক্টেড</button>
-            <button class="filter-tab ${submissionsFilter==='all'?'active':''}" onclick="setSubmissionsFilter('all')">সব</button>
-          </div>
-          <div class="ss-grid">${cardsHtml}</div>
-        </div>
-      `;
+      }).join('');
     }
 
-    window.setSubmissionsFilter = function(filter) {
-      submissionsFilter = filter;
-      renderSubmissions();
-    };
+    let activeTaskViewLink = '';
+    let activeTaskViewIndex = null;
 
-    window.decideSubmission = function(subId, decision) {
-      const submissions = getSubmissions();
-      const sub = submissions.find(s => s.id === subId);
-      if (!sub) return;
+    window.openTask = function(index) {
+      const task = adminConfig.tasks[index];
+      if (!task) return;
+      activeTaskViewIndex = index;
 
-      if (decision === 'approved' && sub.status !== 'approved') {
-        // টাস্কের রিওয়ার্ড বের করা: সাবমিশনে সরাসরি reward থাকলে সেটা, নাহলে টাস্ক লিস্ট থেকে খুঁজে বের করা হবে
-        let rewardAmount = Number(sub.reward || sub.taskReward || 0);
-        if (!rewardAmount) {
-          const matchedTask = adminConfig.tasks.find(t => t.title === sub.taskTitle);
-          if (matchedTask) rewardAmount = Number(matchedTask.reward || 0);
-        }
-        const user = findUser(sub.userId);
-        if (user && rewardAmount > 0) {
-          user.balance = (user.balance || 0) + rewardAmount;
-          user.totalEarned = (user.totalEarned || 0) + rewardAmount;
-          persistUsersAndWithdraws();
-        }
-      }
+      document.getElementById('tvModalTitle').textContent = task.title || 'Task';
+      const reward = (task.reward !== undefined && task.reward !== null) ? task.reward : 0;
+      document.getElementById('tvModalReward').textContent = task.instruction && task.instruction.trim()
+        ? task.instruction.trim()
+        : `৳ ${Number(reward).toFixed(2)} রিওয়ার্ড`;
 
-      sub.status = decision;
-      saveSubmissions(submissions);
-      showToast(decision === 'approved' ? '✅ স্ক্রিনশট এপ্রুভ করা হয়েছে এবং ইউজারের ব্যালেন্সে রিওয়ার্ড যোগ হয়েছে' : '❌ স্ক্রিনশট রিজেক্ট করা হয়েছে');
-      renderSubmissions();
-    };
-
-    window.openSsFullview = function(subId) {
-      const submissions = getSubmissions();
-      const sub = submissions.find(s => s.id === subId);
-      if (!sub) return;
-      document.getElementById('ssFullviewImg').src = sub.image || '';
-      document.getElementById('ssFullviewOverlay').classList.add('show');
-    };
-
-    window.closeSsFullview = function() {
-      document.getElementById('ssFullviewOverlay').classList.remove('show');
-    };
-
-    document.querySelectorAll('.nav-menu a').forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        document.querySelectorAll('.nav-menu a').forEach(a => a.classList.remove('active'));
-        link.classList.add('active');
-        renderSection(link.dataset.section);
-      });
-    });
-
-    document.getElementById('reqModal').addEventListener('click', (e) => {
-      if (e.target.id === 'reqModal') closeModal();
-    });
-
-    // ====================== LOGIN / AUTH ======================
-    window.togglePasswordView = function() {
-      const pwd = document.getElementById('loginPassword');
-      const icon = document.getElementById('toggleEyeIcon');
-      if (pwd.type === 'password') {
-        pwd.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
+      const imageBox = document.getElementById('tvModalImageBox');
+      if (task.image) {
+        imageBox.innerHTML = `<img src="${task.image}" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-image\\' style=\\'font-size:2rem;color:#ccc;\\'></i>'">`;
       } else {
-        pwd.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
+        imageBox.innerHTML = `<i class="fa-solid fa-image" style="font-size:2rem;color:#ccc;"></i>`;
       }
+
+      const linkEl = document.getElementById('tvModalLink');
+      const openBtn = document.getElementById('tvModalOpenBtn');
+      if (task.link) {
+        activeTaskViewLink = task.link;
+        linkEl.textContent = task.link;
+        linkEl.removeAttribute('href');
+        openBtn.style.display = 'block';
+      } else {
+        activeTaskViewLink = '';
+        linkEl.textContent = 'কোনো লিংক সেট করা নেই';
+        openBtn.style.display = 'none';
+      }
+
+      document.getElementById('tvModalOverlay').classList.add('show');
     };
 
-    window.attemptLogin = function() {
-      const email = document.getElementById('loginEmail').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      const errorBox = document.getElementById('loginError');
-      const btn = document.querySelector('.login-form .btn-primary');
+    window.closeTaskViewModal = function() {
+      document.getElementById('tvModalOverlay').classList.remove('show');
+    };
+
+    window.confirmOpenTaskLink = function() {
+      if (!activeTaskViewLink) return;
+      showToast('টাস্ক ওপেন হচ্ছে...');
+      window.open(activeTaskViewLink, '_blank');
+    };
+
+    window.openScreenshotFromTaskView = function() {
+      if (activeTaskViewIndex === null) return;
+      const indexToOpen = activeTaskViewIndex;
+      closeTaskViewModal();
+      openScreenshotModal(indexToOpen);
+    };
+
+    // ---------- SCREENSHOT SUBMISSION ----------
+    let activeScreenshotTaskIndex = null;
+    let activeScreenshotDataUrl = null;
+
+    window.openScreenshotModal = function(index) {
+      activeScreenshotTaskIndex = index;
+      activeScreenshotDataUrl = null;
+      const task = adminConfig.tasks[index];
+      document.getElementById('ssModalTitle').textContent = (task && task.title ? task.title : 'টাস্ক') + ' - স্ক্রিনশট জমা দিন';
+      document.getElementById('ssPreviewBox').innerHTML = '';
+      document.getElementById('ssFileInput').value = '';
+      document.getElementById('ssModalOverlay').classList.add('show');
+    };
+
+    window.closeScreenshotModal = function() {
+      document.getElementById('ssModalOverlay').classList.remove('show');
+      activeScreenshotTaskIndex = null;
+      activeScreenshotDataUrl = null;
+    };
+
+    document.getElementById('ssFileInput').addEventListener('change', function(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        activeScreenshotDataUrl = ev.target.result;
+        document.getElementById('ssPreviewBox').innerHTML = `<img src="${activeScreenshotDataUrl}">`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    window.submitScreenshot = function() {
+      if (activeScreenshotTaskIndex === null) return;
+      if (!activeScreenshotDataUrl) {
+        showToast('দয়া করে একটি স্ক্রিনশট ছবি সিলেক্ট করুন');
+        return;
+      }
+      const task = adminConfig.tasks[activeScreenshotTaskIndex];
+      try {
+        const email = currentEmail();
+        const user = findOrCreateUser(email);
+        const submissions = getTaskSubmissions();
+        const newSubmission = {
+          id: 'ss' + Date.now(),
+          userId: currentUserId(),
+          userName: user.name || email,
+          taskIndex: activeScreenshotTaskIndex,
+          taskTitle: task ? task.title : '',
+          reward: task ? Number(task.reward || 0) : 0,
+          image: activeScreenshotDataUrl,
+          status: 'pending',
+          date: new Date().toISOString().slice(0,16).replace('T',' ')
+        };
+        submissions.push(newSubmission);
+        localStorage.setItem('mahim_task_submissions', JSON.stringify(submissions));
+        syncSubmissionToFirebase(newSubmission);
+      } catch (e) {
+        console.warn('Could not save screenshot submission', e);
+      }
+      showToast('স্ক্রিনশট জমা দেওয়া হয়েছে, এডমিন রিভিউ করবে');
+      closeScreenshotModal();
+      renderTasks();
+    };
+
+    // ---------- AUTH LOGIC ----------
+    const authScreen = document.getElementById('authScreen');
+    const emailInput = document.getElementById('emailInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const signInButton = document.getElementById('signInButton');
+    const authError = document.getElementById('authError');
+
+    // Demo credentials (email & password) — used only to auto-create the demo account the first time
+    const VALID_EMAIL = "demo@mahim.com";
+    const DEFAULT_PASSWORD = "123456";
+
+    // পাসওয়ার্ড এখন mahim_users এন্ট্রির উপরেই সেভ হয়, যাতে এডমিন প্যানেলের
+    // "Users & Balance" টেবিলে ইউজারের আসল পাসওয়ার্ড দেখা যায়।
+    function getPasswordForEmail(email) {
+      email = (email || '').trim().toLowerCase();
+      const user = findUserByEmail(email);
+      if (user && user.password) return user.password;
+      if (email === VALID_EMAIL) return DEFAULT_PASSWORD;
+      return null;
+    }
+
+    function setPasswordForEmail(email, newPassword) {
+      email = (email || '').trim().toLowerCase();
+      const user = findOrCreateUser(email);
+      const users = getUsersStore();
+      const stored = users.find(u => u.id === user.id);
+      if (stored) {
+        stored.password = newPassword;
+        saveUsersStore(users);
+      }
+    }
+
+    // ---------- USER PROFILES (name, referral) ----------
+    // প্রোফাইল তথ্যও এখন mahim_users এন্ট্রিতেই সেভ হয় (আলাদা key-তে নয়), যাতে এডমিন প্যানেল সবকিছু একসাথে দেখতে পায়।
+    function saveUserProfile(email, profile) {
+      email = (email || '').trim().toLowerCase();
+      const user = findOrCreateUser(email, profile);
+      const users = getUsersStore();
+      const stored = users.find(u => u.id === user.id);
+      if (stored) {
+        if (profile.name) stored.name = profile.name;
+        if (profile.referredBy) stored.referredBy = profile.referredBy;
+        if (profile.joined) stored.joined = profile.joined;
+        saveUsersStore(users);
+      }
+    }
+
+    // ---------- APP BOOT (Firebase হাইড্রেশন সম্পূর্ণ হওয়ার পরে চালানো হয়, নিচে hydrateAndStart দেখুন) ----------
+    function bootApp() {
+    // Check if already signed in (sessionStorage)
+    if (sessionStorage.getItem('mahim_logged_in') === 'true') {
+      const savedEmail = sessionStorage.getItem('mahim_current_email');
+      if (savedEmail && emailInput) emailInput.value = savedEmail; // রিলোডের পরও ইনপুট বক্সে সঠিক ইমেইল থাকবে
+      hideAuthScreen();
+    } else {
+      // ---------- TELEGRAM AUTO-LOGIN ----------
+      // আগে এখানে সবাইকে (Telegram-এ যেই খুলুক না কেন) একই demo@mahim.com একাউন্টে অটো সাইন-ইন করানো হতো।
+      // এই কারণেই রেফার কাউন্ট বাড়ছিল না — প্রতিটা নতুন ভিজিটর আলাদা ইউজার হিসেবে তৈরিই হচ্ছিল না, সবাই
+      // একই ডেমো ইউজার হয়ে যাচ্ছিল। এখন Telegram Mini App-এর ভেতরে খুললে Telegram নিজে থেকেই পাঠানো
+      // real ইউনিক Telegram user id দিয়ে প্রতিটা মানুষের নিজস্ব আলাদা একাউন্ট (tg<id>@telegram.user)
+      // অটো তৈরি হয়/লগইন হয় — পাসওয়ার্ড লাগে না। এতে ২য়, ৩য় ... প্রতিটা রেফারড ইউজার সত্যিকারের নতুন
+      // ইউজার হিসেবে তৈরি হবে এবং findOrCreateUser-এর রেফারেল বোনাস লজিক ঠিকমতো চলবে।
+      const tgUser = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) ? window.Telegram.WebApp.initDataUnsafe.user : null;
+      // আসল Telegram Mini App এর ভেতরে খোলা হয়েছে কিনা সেটা initData (signed raw string) দিয়ে বোঝা যায়।
+      // এটা তখনই খালি থাকে না, যখন লিংকটা বট-এর Mini App বাটন/মেনু দিয়ে খোলা হয়েছে।
+      const isInsideTelegram = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
+
+      if (tgUser && tgUser.id) {
+        // Telegram থেকে real user id পাওয়া গেছে — সেটা দিয়েই সাইন-ইন
+        signInAsTelegramUser(tgUser);
+      } else if (isInsideTelegram) {
+        // Telegram Mini App-এর ভেতরেই খোলা হয়েছে, কিন্তু কোনো কারণে user info পাওয়া যায়নি।
+        // এই ক্ষেত্রে আগে সবাইকে একই demo@mahim.com একাউন্টে ফেলে দেওয়া হতো (এটাই মূল বাগ) —
+        // এখন আলাদা করে localStorage-এ কোনো নিজস্ব র‍্যান্ডম guest id বানানো হয় না; তার বদলে
+        // আসল, স্থায়ী Firebase Anonymous Auth UID (auth.currentUser.uid) ব্যবহার করা হয়,
+        // যাতে কেউ ভুলে একে অপরের একাউন্টে/নামে ঢুকে না যায়।
+        const guestId = (window.getFirebaseUid && window.getFirebaseUid()) || ('g' + Date.now().toString(36));
+        signInAsTelegramUser({ id: guestId, first_name: 'User ' + guestId.slice(-5) });
+      } else {
+        // Telegram-এর বাইরে (সাধারণ ব্রাউজার) খুললে আগের মতোই ডেমো একাউন্ট দিয়ে অটো সাইন-ইন হবে (টেস্টিং-এর জন্য)
+        setTimeout(function () {
+          emailInput.value = VALID_EMAIL;
+          passwordInput.value = DEFAULT_PASSWORD;
+          handleSignIn();
+        }, 1500);
+      }
+    }
+    } // bootApp() শেষ
+
+    // Telegram থেকে পাওয়া real user info দিয়ে সাইন-ইন/একাউন্ট তৈরি করে (পাসওয়ার্ড ছাড়াই)
+    function signInAsTelegramUser(tgUser) {
+      const email = 'tg' + tgUser.id + '@telegram.user';
+      const name = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ').trim() || (tgUser.username ? '@' + tgUser.username : ('User ' + tgUser.id));
+      findOrCreateUser(email, { name: name });
+      sessionStorage.setItem('mahim_logged_in', 'true');
+      sessionStorage.setItem('mahim_current_email', email);
+      if (emailInput) emailInput.value = email;
+      hideAuthScreen();
+      applyAdminConfigToUI();
+    }
+
+    // Sign in handler
+    function handleSignIn() {
+      const email = emailInput.value.trim().toLowerCase();
+      const password = passwordInput.value.trim();
 
       if (!email || !password) {
-        errorBox.textContent = 'ইমেইল ও পাসওয়ার্ড দিন';
-        errorBox.classList.add('show');
+        authError.textContent = "ইমেইল এবং পাসওয়ার্ড প্রয়োজন";
         return;
       }
 
-      errorBox.classList.remove('show');
-      if (btn) { btn.disabled = true; btn.textContent = 'সাইন ইন হচ্ছে...'; }
+      const correctPassword = getPasswordForEmail(email);
 
-      // আসল Firebase Authentication দিয়ে লগইন যাচাই — এটাই একমাত্র জায়গা যেখানে
-      // ক্রেডেনশিয়াল যাচাই হয়, কোনো ক্লায়েন্ট-সাইড হার্ডকোডেড চেক নেই।
-      firebase.auth().signInWithEmailAndPassword(email, password)
-        .then(() => {
-          errorBox.classList.remove('show');
-        })
-        .catch((err) => {
-          console.warn('Admin login failed', err.code);
-          errorBox.textContent = 'ভুল ইমেইল বা পাসওয়ার্ড';
-          errorBox.classList.add('show');
-        })
-        .finally(() => {
-          if (btn) { btn.disabled = false; btn.textContent = 'সাইন ইন'; }
-        });
-    };
-
-    // ====================== FORGOT PASSWORD (Firebase Auth রিয়েল ইমেইল রিসেট) ======================
-    window.openForgotPasswordModal = function() {
-      document.getElementById('fpEmailInput').value = '';
-      document.getElementById('fpStep1Error').classList.remove('show');
-      document.getElementById('forgotPasswordModal').classList.add('show');
-    };
-
-    window.closeForgotPasswordModal = function() {
-      document.getElementById('forgotPasswordModal').classList.remove('show');
-    };
-
-    window.sendResetCode = function() {
-      const email = document.getElementById('fpEmailInput').value.trim();
-      const errorBox = document.getElementById('fpStep1Error');
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-      if (!email || !emailPattern.test(email)) {
-        errorBox.textContent = 'সঠিক ইমেইল ফরম্যাট দিন';
-        errorBox.classList.add('show');
-        return;
-      }
-      errorBox.classList.remove('show');
-
-      // Firebase নিজেই আসল রিসেট লিংক-সহ ইমেইল পাঠায় — কোনো কোড এখানে ম্যানুয়ালি বানানো/যাচাই করা হয় না।
-      firebase.auth().sendPasswordResetEmail(email)
-        .then(() => {
-          showToast('📧 রিসেট লিংক পাঠানো হয়েছে, ইমেইল চেক করুন');
-          closeForgotPasswordModal();
-        })
-        .catch((err) => {
-          console.warn('Password reset failed', err.code);
-          errorBox.textContent = 'এই ইমেইলে এডমিন একাউন্ট পাওয়া যায়নি';
-          errorBox.classList.add('show');
-        });
-    };
-
-    window.logoutAdmin = function() {
-      firebase.auth().signOut();
-    };
-
-    function unlockAdminPanel() {
-      document.body.classList.remove('locked');
-      document.getElementById('loginOverlay').style.display = 'none';
-      renderSection('general');
-      updatePendingBadge();
-      updateSubmissionsBadge();
-      lastKnownPendingCount = getSubmissions().filter(s => s.status === 'pending').length;
-      // এখন থেকে নতুন স্ক্রিনশট সাবমিশন Firebase realtime listener দিয়ে সাথে সাথেই ধরা পড়ে
-      // (attachAdminRealtimeListeners দেখুন), তাই আলাদা করে localStorage পোলিং করার আর দরকার নেই।
-      hydrateAndListenFirebase();
-    }
-
-    function lockAdminPanel() {
-      document.body.classList.add('locked');
-      document.getElementById('loginOverlay').style.display = 'flex';
-      document.getElementById('loginEmail').value = '';
-      document.getElementById('loginPassword').value = '';
-      document.getElementById('loginError').classList.remove('show');
-    }
-
-    document.getElementById('loginPassword').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') attemptLogin();
-    });
-
-    // Firebase Auth নিজেই সেশন পার্সিস্ট করে রাখে (localStorage/sessionStorage হাতে লাগে না)।
-    // পেজ লোড/রিফ্রেশ হলে এই লিসেনার অটোমেটিক্যালি লক/আনলক অবস্থা ঠিক করে দেয়।
-    firebase.auth().onAuthStateChanged(function(user) {
-      if (user) {
-        unlockAdminPanel();
+      if (correctPassword !== null && password === correctPassword) {
+        // Success
+        emailInput.value = email;
+        sessionStorage.setItem('mahim_logged_in', 'true');
+        sessionStorage.setItem('mahim_current_email', email);
+        authError.textContent = "";
+        hideAuthScreen();
+        applyAdminConfigToUI(); // লগইনের সাথে সাথেই সঠিক ইউজারের ব্যালেন্স/টাস্ক রিফ্রেশ করে
+        showToast("স্বাগতম! সাইন ইন সফল হয়েছে");
       } else {
-        lockAdminPanel();
+        authError.textContent = "ইমেইল বা পাসওয়ার্ড ভুল। আবার চেষ্টা করুন";
+        passwordInput.value = "";
+      }
+    }
+
+    function hideAuthScreen() {
+      if (authScreen) {
+        authScreen.classList.add('hidden-auth');
+      }
+    }
+
+    // Event listeners for sign in
+    signInButton.addEventListener('click', handleSignIn);
+
+    // Allow Enter key to sign in
+    passwordInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        handleSignIn();
+      }
+    });
+    emailInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        handleSignIn();
       }
     });
 
+    // ---------- TAB SWITCHING (keep existing) ----------
+    window.switchTab = function(tabId, element) {
+      document.querySelectorAll('.tab-section').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      const targetTab = document.getElementById('tab-' + tabId);
+      if (targetTab) targetTab.classList.add('active');
+      if (element) element.classList.add('active');
+      if (tabId === 'wallet' || tabId === 'home') {
+        reconcileWithdrawRefunds();
+        renderBalance();
+        renderWithdrawHistory();
+      }
+      if (tabId === 'refer') {
+        renderReferralInfo();
+      }
+    };
+
+    // ---------- COPY REFERRAL ----------
+    window.copyReferLink = function() {
+      const linkInput = document.getElementById('referLink');
+      if (!linkInput) return;
+      linkInput.select();
+      linkInput.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(linkInput.value).then(() => {
+        showToast("Referral Link Copied!");
+      }).catch(() => {
+        showToast("কপি করতে ব্যর্থ, ম্যানুয়ালি কপি করুন");
+      });
+    };
+
+    // ---------- WITHDRAW FORM ----------
+    window.updateWithdrawFeePreview = function() {
+      const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+      const feePercent = (adminConfig.withdrawFeePercent !== undefined && adminConfig.withdrawFeePercent !== null) ? adminConfig.withdrawFeePercent : 0;
+      const fee = (amount * feePercent) / 100;
+      const receive = amount - fee;
+      const feeTextEl = document.getElementById('withdrawFeeText');
+      const receiveTextEl = document.getElementById('withdrawReceiveText');
+      if (feeTextEl) feeTextEl.textContent = `৳${fee.toFixed(2)} (${feePercent}%)`;
+      if (receiveTextEl) receiveTextEl.textContent = `৳${receive.toFixed(2)}`;
+    };
+
+    window.openReferGateModal = function(required, current) {
+      const textEl = document.getElementById('referGateModalText');
+      if (textEl) {
+        textEl.textContent = `টাকা তুলতে আপনার অন্তত ${required}টি সফল রেফার প্রয়োজন! আপনার বর্তমানে ${current}টি রেফার রয়েছে।`;
+      }
+      const overlay = document.getElementById('referGateModalOverlay');
+      if (overlay) overlay.classList.add('show');
+    };
+    window.closeReferGateModal = function() {
+      const overlay = document.getElementById('referGateModalOverlay');
+      if (overlay) overlay.classList.remove('show');
+    };
+
+    window.handleWithdraw = function(event) {
+      event.preventDefault();
+
+      const requiredRefers = (adminConfig.minReferralsRequired !== undefined && adminConfig.minReferralsRequired !== null) ? adminConfig.minReferralsRequired : 10;
+      const currentUser = findOrCreateUser(currentEmail());
+      const currentRefers = currentUser.referralCount || 0;
+      if (currentRefers < requiredRefers) {
+        openReferGateModal(requiredRefers, currentRefers);
+        return;
+      }
+
+      const amount = parseFloat(document.getElementById('withdrawAmount').value);
+      const method = document.getElementById('withdrawMethod').value;
+      const number = document.getElementById('withdrawNumber').value;
+
+      if (amount < adminConfig.minWithdraw) {
+        showToast(`সর্বনিম্ন উইথড্র ${adminConfig.minWithdraw} ${adminConfig.currency}`);
+        return;
+      }
+      if (amount > adminConfig.maxWithdraw) {
+        showToast(`সর্বোচ্চ উইথড্র ${adminConfig.maxWithdraw} ${adminConfig.currency}`);
+        return;
+      }
+      if (amount > getUserBalance()) {
+        showToast(`আপনার ব্যালেন্সে যথেষ্ট টাকা নেই। বর্তমান ব্যালেন্স: ${getUserBalance().toFixed(2)} ${adminConfig.currency}`);
+        return;
+      }
+
+      // Save the request so it shows up in Admin Panel > Withdraw Requests
+      try {
+        const email = currentEmail();
+        const user = findOrCreateUser(email);
+        const existing = JSON.parse(localStorage.getItem('mahim_withdraws') || '[]');
+        const newReq = {
+          id: 'w' + Date.now(),
+          userId: currentUserId(),
+          userName: user.name || email,
+          phone: number,
+          amount: amount,
+          method: method,
+          number: number,
+          status: 'pending',
+          date: new Date().toISOString().slice(0,16).replace('T',' ')
+        };
+        existing.push(newReq);
+        localStorage.setItem('mahim_withdraws', JSON.stringify(existing));
+        syncWithdrawToFirebase(newReq);
+      } catch (e) {
+        console.warn('Could not save withdraw request', e);
+      }
+
+      // রিকোয়েস্ট সাবমিট হওয়ার সাথে সাথেই ব্যালেন্স থেকে টাকা কেটে নেয়, যাতে ইউজার একই টাকা
+      // আবার তুলতে না পারে। আগে এই অংশটা মিসিং ছিল, তাই ব্যালেন্স কখনো কমতো না।
+      addToUserBalance(-amount);
+      try {
+        const users = getUsersStore();
+        const uRec = users.find(u => u.id === currentUserId());
+        if (uRec) {
+          uRec.totalWithdrawn = (uRec.totalWithdrawn || 0) + amount;
+          saveUsersStore(users);
+        }
+      } catch (e) {
+        console.warn('Could not update totalWithdrawn', e);
+      }
+      renderWithdrawHistory();
+
+      showToast("Withdraw request submitted successfully!");
+      event.target.reset();
+      updateWithdrawFeePreview();
+    };
+
+    // ---------- WITHDRAW HISTORY ----------
+    // এডমিন প্যানেল (mahim-admin-panel.html) থেকে কোনো রিকোয়েস্ট "rejected" করা হলে সেই টাকা
+    // অটোমেটিক মূল ব্যালেন্সে ফেরত দেয়। প্রতিটা রিকোয়েস্ট একবারই রিফান্ড হয় (refunded ফ্ল্যাগ দিয়ে
+    // ট্র্যাক করা হয়), তাই বারবার রিলোড করলে একই টাকা দুইবার যোগ হবে না।
+    function reconcileWithdrawRefunds() {
+      let all = [];
+      try {
+        all = JSON.parse(localStorage.getItem('mahim_withdraws') || '[]');
+      } catch (e) {
+        return;
+      }
+      const myId = currentUserId();
+      let changed = false;
+      all.forEach(w => {
+        if (w.userId === myId && w.status === 'rejected' && !w.refunded) {
+          addToUserBalance(Number(w.amount) || 0);
+          try {
+            const users = getUsersStore();
+            const uRec = users.find(u => u.id === myId);
+            if (uRec) {
+              uRec.totalWithdrawn = Math.max(0, (uRec.totalWithdrawn || 0) - (Number(w.amount) || 0));
+              saveUsersStore(users);
+            }
+          } catch (e) {}
+          w.refunded = true;
+          changed = true;
+        }
+      });
+      if (changed) {
+        localStorage.setItem('mahim_withdraws', JSON.stringify(all));
+        syncWithdrawToFirebase(all.filter(w => w.userId === myId));
+        showToast("একটি উইথড্র রিকোয়েস্ট রিজেক্ট হয়েছে, টাকা ব্যালেন্সে ফেরত দেওয়া হয়েছে");
+      }
+    }
+
+    function renderWithdrawHistory() {
+      const box = document.getElementById('withdrawHistoryBox');
+      if (!box) return;
+      let all = [];
+      try {
+        all = JSON.parse(localStorage.getItem('mahim_withdraws') || '[]');
+      } catch (e) {
+        all = [];
+      }
+      const mine = all.filter(w => w.userId === currentUserId()).sort((a, b) => (a.date < b.date ? 1 : -1));
+      if (mine.length === 0) {
+        box.style.textAlign = 'center';
+        box.style.color = '#888';
+        box.textContent = 'No History';
+        return;
+      }
+      const statusColor = { pending: '#f57c00', approved: '#2e7d32', rejected: '#c62828' };
+      box.style.textAlign = 'left';
+      box.style.color = '';
+      box.innerHTML = mine.map(w => {
+        const color = statusColor[w.status] || '#666';
+        const statusLabel = (w.status || 'pending').toUpperCase();
+        const reasonHtml = (w.status === 'rejected' && w.reason)
+          ? `<p style="font-size:0.75rem; color:#c62828; margin-top:4px;"><i class="fa-solid fa-circle-info"></i> কারণ: ${w.reason}</p>`
+          : '';
+        return `<div style="padding:10px 0; border-bottom:1px dashed #eee;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <p style="font-weight:600;">${w.method} • ৳${Number(w.amount).toFixed(2)}</p>
+              <p style="font-size:0.75rem; color:#888;">${w.date}</p>
+            </div>
+            <span style="font-size:0.7rem; font-weight:700; color:${color};">${statusLabel}</span>
+          </div>
+          ${reasonHtml}
+        </div>`;
+      }).join('');
+    }
+
+    // ---------- TOAST SYSTEM ----------
+    window.showToast = function(message) {
+      const toast = document.getElementById("toast");
+      if (!toast) return;
+      toast.textContent = message;
+      toast.className = "show";
+      setTimeout(function() {
+        toast.className = toast.className.replace("show", "");
+      }, 3000);
+    };
+
+    // ---------- FIREBASE হাইড্রেশন + রিয়েল-টাইম সিঙ্ক চালু করে অ্যাপ শুরু করে ----------
+    // অ্যাপ চালু হওয়ার সাথে সাথে সবার আগে Firebase (আসল/মাস্টার ডেটা) থেকে সবশেষ adminConfig,
+    // users, withdraws, submissions টেনে এনে এই ডিভাইসের localStorage cache আপডেট করা হয় —
+    // যাতে পুরনো/স্টেল লোকাল ডেটা দিয়ে ভুল ব্যালেন্স বা সেটিংস দেখানো না হয়। তারপরই সাইন-ইন/UI
+    // রেন্ডার শুরু হয়, এবং প্রতিটা নোডে রিয়েল-টাইম listener বসানো হয় যাতে ভবিষ্যতে এডমিন প্যানেল
+    // (বা অন্য কোনো ডিভাইস) থেকে কিছু পরিবর্তন হলে সাথে সাথেই এই অ্যাপেও রিফ্লেক্ট হয়, রিলোড ছাড়াই।
+    function hydrateAndStart() {
+      const db = fb();
+      if (!db) {
+        // Firebase আনরিচেবল হলেও অ্যাপ যেন আটকে না থাকে — লোকাল ক্যাশ দিয়েই চালু হবে
+        bootApp();
+        applyAdminConfigToUI();
+        return;
+      }
+      Promise.all([
+        db.ref('mahimAdminConfig').once('value').catch(() => null),
+        db.ref('mahimUsers').once('value').catch(() => null),
+        db.ref('mahimWithdraws').once('value').catch(() => null),
+        db.ref('mahimTaskSubmissions').once('value').catch(() => null)
+      ]).then(([configSnap, usersSnap, withdrawsSnap, subsSnap]) => {
+        if (configSnap && configSnap.exists()) {
+          adminConfig = Object.assign({}, defaultAdminConfig, configSnap.val());
+          localStorage.setItem('mahim_admin_config', JSON.stringify(adminConfig));
+        }
+        if (usersSnap && usersSnap.exists()) {
+          const val = usersSnap.val() || {};
+          const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
+          localStorage.setItem('mahim_users', JSON.stringify(arr));
+        }
+        if (withdrawsSnap && withdrawsSnap.exists()) {
+          const val = withdrawsSnap.val() || {};
+          const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
+          localStorage.setItem('mahim_withdraws', JSON.stringify(arr));
+        }
+        if (subsSnap && subsSnap.exists()) {
+          const val = subsSnap.val() || {};
+          const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
+          localStorage.setItem('mahim_task_submissions', JSON.stringify(arr));
+        }
+      }).catch(err => {
+        console.warn('Initial Firebase hydrate failed, using local cache', err);
+      }).finally(() => {
+        bootApp();
+        applyAdminConfigToUI();
+        attachRealtimeListeners();
+      });
+    }
+
+    // অন্য ডিভাইস/এডমিন প্যানেল থেকে কিছু পরিবর্তন হলেই সাথে সাথে এই অ্যাপে প্রতিফলিত হয়
+    function attachRealtimeListeners() {
+      const db = fb();
+      if (!db) return;
+
+      db.ref('mahimAdminConfig').on('value', snap => {
+        if (!snap.exists()) return;
+        adminConfig = Object.assign({}, defaultAdminConfig, snap.val());
+        localStorage.setItem('mahim_admin_config', JSON.stringify(adminConfig));
+        applyAdminConfigToUI(); // বোনাস/ফিচার টগল/টাস্ক/এড লিংক ইত্যাদি সাথে সাথে আপডেট হবে
+      });
+
+      db.ref('mahimUsers').on('value', snap => {
+        const val = snap.val() || {};
+        const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
+        localStorage.setItem('mahim_users', JSON.stringify(arr));
+        // ব্যালেন্স/রেফারেল কাউন্ট/লিডারবোর্ড সাথে সাথে রিফ্রেশ (এডমিন ব্যালেন্স এড/কাট করলে এখানেই দেখা যাবে)
+        renderBalance();
+        renderProfileHeader();
+        renderReferralInfo();
+      });
+
+      db.ref('mahimWithdraws').on('value', snap => {
+        const val = snap.val() || {};
+        const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
+        localStorage.setItem('mahim_withdraws', JSON.stringify(arr));
+        // এডমিন যদি এইমাত্র রিজেক্ট/এপ্রুভ করে থাকে, রিফান্ড রিকনসাইল ও হিস্ট্রি সাথে সাথে আপডেট হবে
+        reconcileWithdrawRefunds();
+        renderWithdrawHistory();
+      });
+
+      db.ref('mahimTaskSubmissions').on('value', snap => {
+        const val = snap.val() || {};
+        const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
+        localStorage.setItem('mahim_task_submissions', JSON.stringify(arr));
+        renderTasks(); // এডমিন এপ্রুভ/রিজেক্ট করলে টাস্ক লিস্টের স্ট্যাটাস সাথে সাথে বদলে যাবে
+      });
+    }
+
+    // ---------- অ্যাপ শুরু করার আগে Firebase Auth resolve হওয়ার জন্য অপেক্ষা করা ----------
+    // Security Rules-এ (auth != null) প্রয়োগ থাকায়, auth.currentUser নিশ্চিত হওয়ার আগে
+    // কোনো ডেটাবেস রিড/রাইট করা হলে তা রিজেক্ট হয়ে যাবে। তাই এখানে window.mahimAuthReady
+    // প্রমিজ resolve হওয়া পর্যন্ত অপেক্ষা করা হয় (উপরের FIREBASE ANONYMOUS AUTH ব্লক দেখুন),
+    // তারপরই hydrateAndStart() কল হয় যেটা bootApp() ও attachRealtimeListeners() চালায়।
+    if (window.mahimAuthReady && typeof window.mahimAuthReady.then === 'function') {
+      window.mahimAuthReady.then(() => {
+        hydrateAndStart();
+      });
+    } else {
+      // ফলব্যাক (অস্বাভাবিক পরিস্থিতি) — তবুও অ্যাপ যেন আটকে না থাকে
+      hydrateAndStart();
+    }
   })();
 </script>
 </body>
