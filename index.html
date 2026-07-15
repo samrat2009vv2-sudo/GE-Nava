@@ -626,6 +626,25 @@
     .ss-pill.pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
     .ss-pill.approved { background: rgba(16,185,129,0.15); color: #10b981; }
     .ss-pill.rejected { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .task-slot-badge {
+      display: inline-block;
+      margin-top: 2px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(25,118,210,0.1);
+      color: #1565c0;
+    }
+    .task-slot-badge.full { background: rgba(239,68,68,0.12); color: #ef4444; }
+    .task-full-pill {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 14px;
+      background: rgba(158,158,158,0.15);
+      color: #757575;
+    }
 
     .form-control {
       width: 100%;
@@ -723,7 +742,10 @@
     }
     #toast.show {
       visibility: visible;
-      animation: fadein 0.4s, fadeout 0.5s 2.4s;
+      animation: toastFadeIn 0.4s, fadeout 0.5s 2.4s;
+    }
+    @keyframes toastFadeIn {
+      from {opacity: 0;} to {opacity: 1;}
     }
     @keyframes fadeout {
       from {opacity: 1;} to {opacity: 0;}
@@ -1018,12 +1040,35 @@
             <input type="text" id="referLink" value="" readonly>
             <button class="btn-copy" onclick="copyReferLink()"><i class="fa-regular fa-copy"></i></button>
           </div>
-          <button class="btn-primary" style="background:#0088cc; margin-top:12px;" onclick="showToast('শেয়ার মেনু খোলা হচ্ছে...')"><i class="fa-brands fa-telegram"></i> Invite Link Share</button>
         </div>
-        <h3 class="section-title"><i class="fa-solid fa-crown" style="color:#ff9800;"></i> Top Refers</h3>
+
+        <div class="card" style="background:linear-gradient(135deg,#e52d87,#ff6a3d); color:#fff; margin-top:16px;">
+          <h3 style="margin:0 0 4px;">My Team</h3>
+          <p style="margin:0; opacity:0.9; font-size:0.85rem;">আপনার রেফারেল নেটওয়ার্ক</p>
+        </div>
+        <div class="quick-stats-grid" style="margin-top:12px;">
+          <div class="card quick-stat-card">
+            <div class="quick-stat-icon" style="background:#fde8f3; color:#e52d87;"><i class="fa-solid fa-user-group"></i></div>
+            <p class="quick-stat-label">মোট সদস্য</p>
+            <h3 class="quick-stat-value" id="teamTotalCount">0</h3>
+          </div>
+          <div class="card quick-stat-card">
+            <div class="quick-stat-icon" style="background:#e6f7ef; color:#16a34a;"><i class="fa-solid fa-user-check"></i></div>
+            <p class="quick-stat-label">ACTIVE</p>
+            <h3 class="quick-stat-value" id="teamActiveCount">0</h3>
+          </div>
+          <div class="card quick-stat-card">
+            <div class="quick-stat-icon" style="background:#fdecea; color:#e53935;"><i class="fa-solid fa-user-xmark"></i></div>
+            <p class="quick-stat-label">INACTIVE</p>
+            <h3 class="quick-stat-value" id="teamInactiveCount">0</h3>
+          </div>
+        </div>
+
+        <h3 class="section-title" style="margin-top:16px;"><i class="fa-solid fa-crown" style="color:#ff9800;"></i> Top Refers</h3>
 
         <div class="card" id="leaderboardList" style="text-align:center; color:#888;">এখনো কোনো রেফার নেই</div>
       </section>
+
 
       <section id="tab-wallet" class="tab-section">
         <h3 class="section-title"><i class="fa-solid fa-wallet" style="color:#e52d87;"></i> Withdraw</h3>
@@ -1322,6 +1367,25 @@
       console.warn('Admin config load failed, using defaults', e);
     }
 
+    // ---------- TOAST MESSAGE ----------
+    // #toast div (HTML) এবং তার CSS (#toast, #toast.show) আগে থেকেই ছিল, কিন্তু এটাকে দেখানোর
+    // জন্য JS ফাংশনটাই মিসিং ছিল। এই ফাংশন কল হলে .show ক্লাস যোগ করে ~2.8s পর নিজে থেকে সরিয়ে দেয়
+    // (CSS-এ থাকা fadein/fadeout অ্যানিমেশন টাইমিং এর সাথে মিলিয়ে)।
+    let toastHideTimer = null;
+    window.showToast = function(message) {
+      const toastEl = document.getElementById('toast');
+      if (!toastEl) return;
+      toastEl.textContent = message;
+      // রিস্টার্ট অ্যানিমেশন: আগের কোনো toast চলমান থাকলে আগে ক্লাস সরিয়ে reflow করে আবার যোগ করা হচ্ছে
+      toastEl.classList.remove('show');
+      void toastEl.offsetWidth;
+      toastEl.classList.add('show');
+      if (toastHideTimer) clearTimeout(toastHideTimer);
+      toastHideTimer = setTimeout(function() {
+        toastEl.classList.remove('show');
+      }, 2900);
+    };
+
     // ---------- REFERRAL CODE CAPTURE ----------
     // Telegram Mini App লিংক (t.me/Go_tasks_ern_bot/app?startapp=UID) দিয়ে ঢুকলে Telegram নিজে থেকেই
     // সেই কোডটা Telegram.WebApp.initDataUnsafe.start_param এ পাঠায়। ব্রাউজারে টেস্ট করার জন্য ?ref=UID
@@ -1583,7 +1647,124 @@
     // সরাসরি firebase.auth().currentUser.uid রিটার্ন করে (bootApp() Auth resolve হওয়ার
     // পরেই কল হয়, তাই এই সময় uid সবসময় পাওয়া যাবে)।
     function getDeviceId() {
-      return (window.getFirebaseUid && window.getFirebaseUid()) || 'dev_unknown';
+      const uid = window.getFirebaseUid && window.getFirebaseUid();
+      if (uid) return uid;
+      // Firebase Anonymous Auth লোড/init ব্যর্থ হলে (নেটওয়ার্ক ব্লকড ইত্যাদি) সবাই একই
+      // 'dev_unknown' key শেয়ার করে ফেললে ভিন্ন ইউজারদের ডেটা মিশে যেত। তাই ফলব্যাক হিসেবে
+      // localStorage-এ একটা এলোমেলো id তৈরি করে persist রাখা হয় (Firebase UID-এর মতো
+      // যাচাইযোগ্য না, কিন্তু অন্তত ইউজাররা একে অপরের একাউন্টে ঢুকে যাবে না)।
+      let fallback = localStorage.getItem('mahim_fallback_uid');
+      if (!fallback) {
+        fallback = 'fallback_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem('mahim_fallback_uid', fallback);
+      }
+      return fallback;
+    }
+
+    // ---------- ONE PHONE = ONE ACCOUNT (DEVICE FINGERPRINT LOCK) ----------
+    // লক্ষ্য: password জানা থাকলেও, বা cache/storage ক্লিয়ার করে নতুন Firebase Anonymous UID
+    // বানিয়ে ফেললেও, একই ফোন/ব্রাউজার থেকে দ্বিতীয় অ্যাকাউন্ট ব্যবহার করা যেন না যায়।
+    // যেহেতু ব্রাউজার/WebView থেকে আসল হার্ডওয়্যার আইডি (IMEI ইত্যাদি) পড়া সম্ভব না, তাই
+    // ডিভাইসের কিছু স্থিতিশীল বৈশিষ্ট্য (স্ক্রিন সাইজ, GPU, CPU কোর সংখ্যা, টাইমজোন, ভাষা,
+    // user-agent) মিলিয়ে একটা "ফিঙ্গারপ্রিন্ট" বানানো হয়। এটা storage ক্লিয়ার করলেও প্রায়
+    // একই থাকে (কারণ এগুলো storage-এ সেভ করা কোনো ডেটা না, ডিভাইস/ব্রাউজারের নিজস্ব বৈশিষ্ট্য)।
+    // ⚠️ এটা ১০০% অভেদ্য না — যেমন ভিন্ন ব্রাউজার (Chrome vs Telegram in-app) আলাদা ফিঙ্গারপ্রিন্ট
+    // দিতে পারে, বা GPU/সেটিংস পরিবর্তনে সামান্য বদলাতে পারে — কিন্তু সাধারণ ইউজারদের একই ফোনে
+    // একাধিক অ্যাকাউন্ট বানানো (রেফার ফ্রড) ঠেকানোর জন্য যথেষ্ট শক্ত একটা বাধা তৈরি করে।
+    function getWebGLRenderer() {
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (!gl) return 'no-webgl';
+        const dbgInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        if (!dbgInfo) return 'no-dbginfo';
+        return gl.getParameter(dbgInfo.UNMASKED_RENDERER_WEBGL) + '|' + gl.getParameter(dbgInfo.UNMASKED_VENDOR_WEBGL);
+      } catch (e) {
+        return 'webgl-error';
+      }
+    }
+
+    // সহজ, সিঙ্ক্রোনাস স্ট্রিং হ্যাশ (FNV-1a) — crypto.subtle সব Telegram WebView-তে না-ও কাজ
+    // করতে পারে, তাই dependency-free রাখা হলো।
+    function fnv1aHash(str) {
+      let hash = 0x811c9dc5;
+      for (let i = 0; i < str.length; i++) {
+        hash ^= str.charCodeAt(i);
+        hash = (hash * 0x01000193) >>> 0;
+      }
+      return hash.toString(16);
+    }
+
+    function getDeviceFingerprint() {
+      try {
+        const parts = [
+          navigator.userAgent || '',
+          navigator.language || '',
+          navigator.platform || '',
+          String(navigator.hardwareConcurrency || ''),
+          String(navigator.deviceMemory || ''),
+          String(screen.width) + 'x' + String(screen.height),
+          String(screen.colorDepth || ''),
+          String(Intl.DateTimeFormat().resolvedOptions().timeZone || ''),
+          String(new Date().getTimezoneOffset()),
+          getWebGLRenderer()
+        ];
+        return 'fp_' + fnv1aHash(parts.join('##'));
+      } catch (e) {
+        return null; // ফিঙ্গারপ্রিন্ট বানানো সম্ভব না হলে চেক স্কিপ হবে (অ্যাপ ভেঙে যাবে না)
+      }
+    }
+
+    // ফায়ারবেসে mahimDeviceFingerprints/{fingerprint} নোডে চেক করে —
+    // - নোড না থাকলে: এই ডিভাইসের প্রথম অ্যাকাউন্ট হিসেবে ক্লেইম করে নেয়, অ্যাপ চলতে দেয়
+    // - নোড থাকলে এবং একই userId হলে: ঠিক আছে, চলতে দেয়
+    // - নোড থাকলে এবং ভিন্ন userId হলে: ব্যান স্ক্রিন দেখায়, অ্যাপ আটকে দেয়
+    // রিটার্ন করে একটা Promise<boolean> — true মানে ব্লকড/ব্যানড
+    function checkOneAccountPerDevice(uid) {
+      return new Promise(function (resolve) {
+        const fp = getDeviceFingerprint();
+        const db = fb();
+        if (!fp || !db || !uid) {
+          resolve(false); // ফায়ারবেস/ফিঙ্গারপ্রিন্ট না থাকলে চেক স্কিপ (fail-open, অ্যাপ ভাঙবে না)
+          return;
+        }
+        const ref = db.ref('mahimDeviceFingerprints/' + fp);
+        ref.once('value').then(function (snap) {
+          const existing = snap.val();
+          if (!existing) {
+            ref.set({ userId: uid, firstSeen: new Date().toISOString() }).catch(function (err) {
+              console.warn('Device fingerprint claim ব্যর্থ (rules চেক করুন)', err);
+            });
+            resolve(false);
+          } else if (existing.userId === uid) {
+            resolve(false);
+          } else {
+            resolve(true); // অন্য একাউন্ট আগে থেকেই এই ডিভাইস ব্যবহার করছে
+          }
+        }).catch(function (err) {
+          console.warn('Device fingerprint চেক ব্যর্থ (নেটওয়ার্ক/rules)', err);
+          resolve(false); // চেক ব্যর্থ হলে ইউজারকে আটকানো হবে না (fail-open)
+        });
+      });
+    }
+
+    function showBannedScreen() {
+      const authScreen = document.getElementById('authScreen');
+      if (authScreen) authScreen.classList.remove('hidden-auth');
+      const wrapper = document.getElementById('appMainWrapper');
+      if (wrapper) wrapper.style.display = 'none';
+      let banEl = document.getElementById('mahimBannedOverlay');
+      if (!banEl) {
+        banEl = document.createElement('div');
+        banEl.id = 'mahimBannedOverlay';
+        banEl.style.cssText = 'position:fixed;inset:0;background:#0b0b0f;color:#fff;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:inherit;';
+        banEl.innerHTML =
+          '<i class="fa-solid fa-ban" style="font-size:2.6rem;color:#ff4d4f;margin-bottom:16px;"></i>' +
+          '<div style="font-size:1.1rem;font-weight:600;margin-bottom:10px;">এই ফোনে ইতিমধ্যে একটি অ্যাকাউন্ট ব্যবহৃত হচ্ছে</div>' +
+          '<div style="font-size:0.9rem;color:#ccc;max-width:340px;">একই ফোন/ডিভাইস থেকে একাধিক অ্যাকাউন্ট খোলা বা ব্যবহার করার অনুমতি নেই। পাসওয়ার্ড সঠিক থাকলেও এই ডিভাইস থেকে অন্য কোনো অ্যাকাউন্টে ঢোকা যাবে না।</div>';
+        document.body.appendChild(banEl);
+      }
+      banEl.style.display = 'flex';
     }
 
     // ইমেইলের প্রথম অংশ থেকে @username তৈরি করে (প্রোফাইল কার্ডে দেখানোর জন্য)
@@ -1595,18 +1776,39 @@
 
     function findUserByEmail(email) {
       const users = getUsersStore();
-      const id = 'user_' + email;
-      return users.find(u => u.id === id || (u.email && u.email.toLowerCase() === email));
+      return users.find(u => u.email && u.email.toLowerCase() === email);
     }
 
     // ইউজার খুঁজে পায়, না পেলে একটা নতুন এন্ট্রি তৈরি করে (এবং পুরনো ডেটা থাকলে মাইগ্রেট করে) — এতে
     // এডমিন প্যানেলের "Users & Balance" লিস্টেও ইউজারটি সাথে সাথে দেখা যাবে।
+    // ---------- PRIMARY KEY = Firebase Anonymous Auth UID ----------
+    // এখন থেকে প্রতিটা ইউজার রেকর্ডের id হলো তার ডিভাইস/ব্রাউজারের Firebase Anonymous Auth UID
+    // (currentUserId() দেখুন) — email/password শুধু প্রোফাইল/লগইন তথ্য হিসেবে সেভ থাকে,
+    // কিন্তু আর primary key না। ফলে: (ক) email বদলালেও balance/referral একই থাকবে যতক্ষণ একই
+    // ডিভাইসে/ব্রাউজারে থাকা হয়, (খ) কিন্তু browser data/cache clear করলে বা নতুন ডিভাইসে
+    // লগইন করলে নতুন UID পাওয়া যাবে বলে পুরনো balance আর দেখা যাবে না, (গ) একই ডিভাইস থেকে
+    // একাধিক একাউন্ট বানিয়ে রেফার ফ্রড করা structurally অসম্ভব হয়ে যায় (একটা UID = একটাই রেকর্ড)।
     function findOrCreateUser(email, extra) {
       email = (email || '').trim().toLowerCase();
       const users = getUsersStore();
-      const id = 'user_' + email;
+      const id = currentUserId(); // Firebase UID
       let user = users.find(u => u.id === id);
+
       if (!user) {
+        // ---------- মাইগ্রেশন ----------
+        // এই আপডেটের আগে ইউজাররা email-ভিত্তিক key ('user_'+email) দিয়ে সেভ হতো। কারো ডেটা
+        // যেন হারিয়ে না যায়, তাই একই email দিয়ে প্রথমবার নতুন কোডে লগইন করলে পুরনো রেকর্ডটা
+        // খুঁজে বের করে তার id-কে নতুন UID-তে বদলে দেওয়া হয় (একবারই ঘটে, তারপর normal path)।
+        const legacyId = 'user_' + email;
+        const legacyUser = email ? users.find(u => u.id === legacyId) : null;
+        if (legacyUser) {
+          legacyUser.id = id;
+          legacyUser.uid = legacyUser.uid || generateUID();
+          legacyUser.deviceId = id;
+          saveUsersStore(users);
+          return legacyUser;
+        }
+
         const legacy = migrateLegacyUserData(email, id);
         user = {
           id: id,
@@ -1621,7 +1823,7 @@
           referralCount: 0,
           referredBy: (extra && extra.referredBy) || (legacy.migratedProfile && legacy.migratedProfile.referredBy) || null,
           referralConfirmed: false,
-          deviceId: getDeviceId(),
+          deviceId: id,
           joined: (extra && extra.joined) || (legacy.migratedProfile && legacy.migratedProfile.joined) || new Date().toISOString().slice(0, 10)
         };
 
@@ -1632,18 +1834,15 @@
         // পুরোপুরি দেখে সম্পূর্ণ করলে (finishAdWatch এ confirmReferralIfPending() কল হয়) তখনই
         // রেফারারকে বোনাস দেওয়া হয়। এতে খালি সাইন-আপ করেই বোনাস বানানো বন্ধ হয়ে যায়।
         //
-        // দ্রষ্টব্য: আগে এখানে একই deviceId থেকে রেফার করলে বোনাস পুরোপুরি ব্লক করে দেওয়া হতো,
-        // কিন্তু এতে পরিবারে শেয়ার করা ফোন/একই ফোনে টেস্টিং করলেও রেফার কাউন্ট বাড়ছিল না
-        // (false positive)। তাই এখন সেটা ব্লক না করে শুধু ফ্ল্যাগ করে রাখা হয় (suspiciousSameDevice),
-        // যাতে ভবিষ্যতে এডমিন প্যানেলে চাইলে এই তালিকা আলাদা করে রিভিউ করা যায় — কিন্তু বোনাস
-        // Ad-দেখা কনফার্মেশন সাপেক্ষে ঠিকই চলে।
+        // দ্রষ্টব্য: এখন id নিজেই ডিভাইসের UID, তাই একই ডিভাইস থেকে দ্বিতীয় একাউন্ট তৈরি করাই
+        // structurally অসম্ভব (id ইতিমধ্যে থাকলে এই if(!user) ব্লকেই ঢোকা হতো না)। নিচের চেকটা
+        // এখন মূলত ফলব্যাক-id কেসের (Firebase লোড ব্যর্থ হলে) জন্য একটা এক্সট্রা সেফটি-নেট।
         try {
           const refCode = sessionStorage.getItem('mahim_pending_ref');
           if (refCode) {
             const referrer = users.find(u => u.uid === refCode && u.id !== id);
             if (referrer) {
-              const myDeviceId = user.deviceId;
-              const sameDeviceAlreadyUsed = users.some(u => u.deviceId && u.deviceId === myDeviceId);
+              const sameDeviceAlreadyUsed = users.some(u => u.deviceId && u.deviceId === id);
               if (sameDeviceAlreadyUsed) {
                 user.suspiciousSameDevice = true; // শুধু নোট রাখা, বোনাস আটকানো হচ্ছে না
               }
@@ -1657,6 +1856,11 @@
         }
 
         users.push(user);
+        saveUsersStore(users);
+      } else if (email && user.email !== email) {
+        // একই UID, কিন্তু ভিন্ন email দিয়ে লগইন করা হয়েছে — শুধু প্রোফাইল email আপডেট হয়,
+        // identity (balance/referral) অপরিবর্তিত থাকে।
+        user.email = email;
         saveUsersStore(users);
       }
       return user;
@@ -1701,7 +1905,7 @@
     function saveUserBalance(amount) {
       const email = currentEmail();
       const users = getUsersStore();
-      const id = 'user_' + email;
+      const id = currentUserId();
       let user = users.find(u => u.id === id);
       if (!user) {
         user = findOrCreateUser(email); // creates & persists
@@ -1721,6 +1925,23 @@
       const bonus = (adminConfig.referralBonus !== undefined && adminConfig.referralBonus !== null) ? adminConfig.referralBonus : 1;
       const bonusTextEl = document.getElementById('referBonusText');
       if (bonusTextEl) bonusTextEl.textContent = `প্রতি ফ্রেন্ডে ${bonus} ${adminConfig.currency || 'TK'}!`;
+
+      // ---------- MY TEAM স্ট্যাটস (মোট সদস্য / ACTIVE / INACTIVE) ----------
+      // যাদের referredBy === আমার uid তারাই আমার টিম মেম্বার। যাদের referralConfirmed
+      // true (অর্থাৎ প্রথম Ad সম্পূর্ণ করে বোনাস কনফার্ম হয়ে গেছে) তারা ACTIVE,
+      // বাকিরা (এখনো কনফার্ম হয়নি) INACTIVE হিসেবে গণনা হয়।
+      let allUsers = [];
+      try { allUsers = getUsersStore(); } catch (e) { allUsers = []; }
+      const myTeam = allUsers.filter(u => u.referredBy === user.uid);
+      const activeCount = myTeam.filter(u => u.referralConfirmed).length;
+      const inactiveCount = myTeam.length - activeCount;
+      const teamTotalEl = document.getElementById('teamTotalCount');
+      const teamActiveEl = document.getElementById('teamActiveCount');
+      const teamInactiveEl = document.getElementById('teamInactiveCount');
+      if (teamTotalEl) teamTotalEl.textContent = String(myTeam.length);
+      if (teamActiveEl) teamActiveEl.textContent = String(activeCount);
+      if (teamInactiveEl) teamInactiveEl.textContent = String(inactiveCount);
+
       renderLeaderboard();
     }
 
@@ -1804,9 +2025,12 @@
     let adSlotTimerInterval = null;
 
     function getSlotMax(slotNumber) {
-      return slotNumber === 1
-        ? (Array.isArray(adminConfig.adSlot1Links) ? adminConfig.adSlot1Links.length : 25)
-        : (Array.isArray(adminConfig.adSlot2Links) ? adminConfig.adSlot2Links.length : 25);
+      // এডমিন প্যানেল থেকে কোনো লিংক সেট না থাকলে (অ্যারে খালি বা অ্যারে না হলে)
+      // ম্যাক্স ধরা হবে 0। আগে ডিফল্ট হিসেবে 25 ধরা হতো, যার কারণে এডমিন কোনো এড
+      // সেট না করলেও "0/25 Watched" দেখিয়ে Ad Slot চালু/ক্লিকযোগ্য দেখাত।
+      const links = slotNumber === 1 ? adminConfig.adSlot1Links : adminConfig.adSlot2Links;
+      if (!Array.isArray(links)) return 0;
+      return links.filter(l => l && String(l).trim() !== '').length;
     }
 
     function formatRemainingTime(ms) {
@@ -1852,10 +2076,18 @@
         const completedAt = counts[completedKey];
 
         const countEl = document.getElementById('adSlot' + slotNumber + 'Count');
-        if (countEl) countEl.textContent = `${watched}/${slotMax} Watched`;
-
         const timerEl = document.getElementById('adSlot' + slotNumber + 'Timer');
         const cardEl = document.getElementById('adSlot' + slotNumber + 'Card');
+
+        if (slotMax === 0) {
+          // এডমিন এখনো এই স্লটের জন্য কোনো এড লিংক সেট করেননি
+          if (countEl) countEl.textContent = `কোনো এড সেট করা নেই`;
+          if (timerEl) { timerEl.style.display = 'none'; timerEl.textContent = ''; }
+          if (cardEl) cardEl.style.opacity = '0.5';
+          return;
+        }
+
+        if (countEl) countEl.textContent = `${watched}/${slotMax} Watched`;
 
         if (watched >= slotMax && completedAt) {
           const remaining = AD_COOLDOWN_MS - (Date.now() - completedAt);
@@ -1896,8 +2128,12 @@
       return (stored || fromInput || 'demo').toLowerCase();
     }
 
+    // Anonymous Auth UID-ই এখন আসল identity/primary key — email/password শুধু প্রোফাইল তথ্য
+    // (দেখুন findOrCreateUser)। balance/referral এখন এই ডিভাইস/ব্রাউজারের Firebase UID-এর সাথে
+    // বাঁধা থাকে, email-এর সাথে না — তাই browser/cache clear করলে বা অন্য ডিভাইসে লগইন করলে
+    // আগের balance পাওয়া যাবে না।
     function currentUserId() {
-      return 'user_' + currentEmail();
+      return getDeviceId();
     }
 
     function getAdWatchedCounts() {
@@ -1949,6 +2185,11 @@
       const current = counts[slotKey] || 0;
 
       if (current >= slotMax) {
+        if (slotMax === 0) {
+          showToast(`Ad Slot ${slotNumber} এর জন্য এডমিন এখনো কোনো এড সেট করেননি`);
+          renderAdSlots();
+          return;
+        }
         const completedAt = counts[completedKey];
         if (completedAt) {
           const remaining = AD_COOLDOWN_MS - (Date.now() - completedAt);
@@ -2098,22 +2339,42 @@
           : `<i class="fa-solid fa-list-check"></i>`;
         const reward = (t.reward !== undefined && t.reward !== null) ? t.reward : 0;
         const mySub = submissions.filter(s => s.userId === uid && s.taskIndex === i).sort((a,b)=> b.date.localeCompare(a.date))[0];
+
+        // ---- স্লট/কোটা হিসাব: এডমিন যে সংখ্যা সেট করে তার ভিত্তিতে কতজন বাকি আছে ----
+        const used = submissions.filter(s => s.taskIndex === i && s.status !== 'rejected').length;
+        const limit = Number(t.limit) || 0; // 0 বা খালি মানে আনলিমিটেড
+        const hasLimit = limit > 0;
+        const remaining = hasLimit ? Math.max(limit - used, 0) : null;
+        const isFull = hasLimit && remaining <= 0;
+        const slotBadgeHtml = hasLimit
+          ? `<span class="task-slot-badge${isFull ? ' full' : ''}">${isFull ? 'সব স্লট পূর্ণ' : `বাকি আছে ${remaining} টি`}</span>`
+          : '';
+
         let ssButtonHtml = `<button class="btn-ss" onclick="openScreenshotModal(${i})"><i class="fa-solid fa-camera"></i> সাবমিট বাটন</button>`;
         if (mySub) {
           const label = mySub.status === 'approved' ? 'অ্যাপ্রুভড' : mySub.status === 'rejected' ? 'রিজেক্টেড' : 'রিভিউ চলছে';
           ssButtonHtml = `<span class="ss-pill ${mySub.status}">${label}</span>`;
           if (mySub.status === 'rejected') {
-            ssButtonHtml += `<button class="btn-ss" style="margin-top:6px;" onclick="openScreenshotModal(${i})"><i class="fa-solid fa-camera"></i> আবার দিন</button>`;
+            ssButtonHtml += isFull
+              ? `<span class="task-full-pill" style="margin-top:6px; display:block; text-align:center;">স্লট শেষ</span>`
+              : `<button class="btn-ss" style="margin-top:6px;" onclick="openScreenshotModal(${i})"><i class="fa-solid fa-camera"></i> আবার দিন</button>`;
           }
+        } else if (isFull) {
+          ssButtonHtml = `<span class="task-full-pill">স্লট শেষ</span>`;
         }
+
+        const taskBtnHtml = (isFull && !mySub)
+          ? `<button class="btn-task" style="opacity:0.5; cursor:not-allowed;" disabled>কাজটি দেখুন</button>`
+          : `<button class="btn-task" onclick="openTask(${i})">কাজটি দেখুন</button>`;
+
         return `
           <div class="task-item">
             <div class="task-info">
               <div class="task-icon">${iconHtml}</div>
-              <div class="task-details"><h4>${t.title || 'Task ' + (i+1)}</h4><p>৳ ${Number(reward).toFixed(2)}</p></div>
+              <div class="task-details"><h4>${t.title || 'Task ' + (i+1)}</h4><p>৳ ${Number(reward).toFixed(2)}</p>${slotBadgeHtml}</div>
             </div>
             <div class="task-actions">
-              <button class="btn-task" onclick="openTask(${i})">কাজটি দেখুন</button>
+              ${taskBtnHtml}
               ${ssButtonHtml}
             </div>
           </div>
@@ -2213,6 +2474,22 @@
         return;
       }
       const task = adminConfig.tasks[activeScreenshotTaskIndex];
+
+      // ---- সাবমিট করার ঠিক আগে আবার স্লট চেক করা হয়, যাতে স্লট পূর্ণ হয়ে গেলে জমা না হয় ----
+      const limitCheck = Number(task && task.limit) || 0;
+      if (limitCheck > 0) {
+        const existingSubs = getTaskSubmissions();
+        const uidCheck = currentUserId();
+        const alreadyMine = existingSubs.some(s => s.userId === uidCheck && s.taskIndex === activeScreenshotTaskIndex && s.status !== 'rejected');
+        const usedCheck = existingSubs.filter(s => s.taskIndex === activeScreenshotTaskIndex && s.status !== 'rejected').length;
+        if (!alreadyMine && usedCheck >= limitCheck) {
+          showToast('দুঃখিত, এই টাস্কের সব স্লট পূর্ণ হয়ে গেছে');
+          closeScreenshotModal();
+          renderTasks();
+          return;
+        }
+      }
+
       try {
         const email = currentEmail();
         const user = findOrCreateUser(email);
@@ -2565,139 +2842,51 @@
         box.textContent = 'No History';
         return;
       }
-      const statusColor = { pending: '#f57c00', approved: '#2e7d32', rejected: '#c62828' };
-      box.style.textAlign = 'left';
+      box.style.textAlign = '';
       box.style.color = '';
+      const statusLabel = { pending: 'পেন্ডিং', approved: 'সফল', rejected: 'বাতিল' };
       box.innerHTML = mine.map(w => {
-        const color = statusColor[w.status] || '#666';
-        const statusLabel = (w.status || 'pending').toUpperCase();
-        const reasonHtml = (w.status === 'rejected' && w.reason)
-          ? `<p style="font-size:0.75rem; color:#c62828; margin-top:4px;"><i class="fa-solid fa-circle-info"></i> কারণ: ${w.reason}</p>`
-          : '';
-        return `<div style="padding:10px 0; border-bottom:1px dashed #eee;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
+        const label = statusLabel[w.status] || w.status;
+        return `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #eee;">
             <div>
-              <p style="font-weight:600;">${w.method} • ৳${Number(w.amount).toFixed(2)}</p>
-              <p style="font-size:0.75rem; color:#888;">${w.date}</p>
+              <h4 style="font-size:0.95rem; margin-bottom:3px;">${w.method || ''} - ${w.number || ''}</h4>
+              <p style="font-size:0.8rem; color:#888;">${w.date || ''}</p>
             </div>
-            <span style="font-size:0.7rem; font-weight:700; color:${color};">${statusLabel}</span>
+            <div style="text-align:right;">
+              <h4 style="font-size:1rem; color:#1e1e1e;">৳${Number(w.amount || 0).toFixed(2)}</h4>
+              <span class="ss-pill ${w.status}" style="margin-top:2px; display:inline-block;">${label}</span>
+            </div>
           </div>
-          ${reasonHtml}
-        </div>`;
+        `;
       }).join('');
     }
 
-    // ---------- TOAST SYSTEM ----------
-    window.showToast = function(message) {
-      const toast = document.getElementById("toast");
-      if (!toast) return;
-      toast.textContent = message;
-      toast.className = "show";
-      setTimeout(function() {
-        toast.className = toast.className.replace("show", "");
-      }, 3000);
-    };
-
-    // ---------- FIREBASE হাইড্রেশন + রিয়েল-টাইম সিঙ্ক চালু করে অ্যাপ শুরু করে ----------
-    // অ্যাপ চালু হওয়ার সাথে সাথে সবার আগে Firebase (আসল/মাস্টার ডেটা) থেকে সবশেষ adminConfig,
-    // users, withdraws, submissions টেনে এনে এই ডিভাইসের localStorage cache আপডেট করা হয় —
-    // যাতে পুরনো/স্টেল লোকাল ডেটা দিয়ে ভুল ব্যালেন্স বা সেটিংস দেখানো না হয়। তারপরই সাইন-ইন/UI
-    // রেন্ডার শুরু হয়, এবং প্রতিটা নোডে রিয়েল-টাইম listener বসানো হয় যাতে ভবিষ্যতে এডমিন প্যানেল
-    // (বা অন্য কোনো ডিভাইস) থেকে কিছু পরিবর্তন হলে সাথে সাথেই এই অ্যাপেও রিফ্লেক্ট হয়, রিলোড ছাড়াই।
-    function hydrateAndStart() {
-      const db = fb();
-      if (!db) {
-        // Firebase আনরিচেবল হলেও অ্যাপ যেন আটকে না থাকে — লোকাল ক্যাশ দিয়েই চালু হবে
-        bootApp();
-        applyAdminConfigToUI();
-        return;
-      }
-      Promise.all([
-        db.ref('mahimAdminConfig').once('value').catch(() => null),
-        db.ref('mahimUsers').once('value').catch(() => null),
-        db.ref('mahimWithdraws').once('value').catch(() => null),
-        db.ref('mahimTaskSubmissions').once('value').catch(() => null)
-      ]).then(([configSnap, usersSnap, withdrawsSnap, subsSnap]) => {
-        if (configSnap && configSnap.exists()) {
-          adminConfig = Object.assign({}, defaultAdminConfig, configSnap.val());
-          localStorage.setItem('mahim_admin_config', JSON.stringify(adminConfig));
-        }
-        if (usersSnap && usersSnap.exists()) {
-          const val = usersSnap.val() || {};
-          const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
-          localStorage.setItem('mahim_users', JSON.stringify(arr));
-        }
-        if (withdrawsSnap && withdrawsSnap.exists()) {
-          const val = withdrawsSnap.val() || {};
-          const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
-          localStorage.setItem('mahim_withdraws', JSON.stringify(arr));
-        }
-        if (subsSnap && subsSnap.exists()) {
-          const val = subsSnap.val() || {};
-          const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
-          localStorage.setItem('mahim_task_submissions', JSON.stringify(arr));
-        }
-      }).catch(err => {
-        console.warn('Initial Firebase hydrate failed, using local cache', err);
-      }).finally(() => {
-        bootApp();
-        applyAdminConfigToUI();
-        attachRealtimeListeners();
-      });
-    }
-
-    // অন্য ডিভাইস/এডমিন প্যানেল থেকে কিছু পরিবর্তন হলেই সাথে সাথে এই অ্যাপে প্রতিফলিত হয়
-    function attachRealtimeListeners() {
-      const db = fb();
-      if (!db) return;
-
-      db.ref('mahimAdminConfig').on('value', snap => {
-        if (!snap.exists()) return;
-        adminConfig = Object.assign({}, defaultAdminConfig, snap.val());
-        localStorage.setItem('mahim_admin_config', JSON.stringify(adminConfig));
-        applyAdminConfigToUI(); // বোনাস/ফিচার টগল/টাস্ক/এড লিংক ইত্যাদি সাথে সাথে আপডেট হবে
-      });
-
-      db.ref('mahimUsers').on('value', snap => {
-        const val = snap.val() || {};
-        const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
-        localStorage.setItem('mahim_users', JSON.stringify(arr));
-        // ব্যালেন্স/রেফারেল কাউন্ট/লিডারবোর্ড সাথে সাথে রিফ্রেশ (এডমিন ব্যালেন্স এড/কাট করলে এখানেই দেখা যাবে)
-        renderBalance();
-        renderProfileHeader();
-        renderReferralInfo();
-      });
-
-      db.ref('mahimWithdraws').on('value', snap => {
-        const val = snap.val() || {};
-        const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
-        localStorage.setItem('mahim_withdraws', JSON.stringify(arr));
-        // এডমিন যদি এইমাত্র রিজেক্ট/এপ্রুভ করে থাকে, রিফান্ড রিকনসাইল ও হিস্ট্রি সাথে সাথে আপডেট হবে
-        reconcileWithdrawRefunds();
-        renderWithdrawHistory();
-      });
-
-      db.ref('mahimTaskSubmissions').on('value', snap => {
-        const val = snap.val() || {};
-        const arr = Object.keys(val).map(id => Object.assign({}, val[id], { id: id }));
-        localStorage.setItem('mahim_task_submissions', JSON.stringify(arr));
-        renderTasks(); // এডমিন এপ্রুভ/রিজেক্ট করলে টাস্ক লিস্টের স্ট্যাটাস সাথে সাথে বদলে যাবে
-      });
-    }
-
-    // ---------- অ্যাপ শুরু করার আগে Firebase Auth resolve হওয়ার জন্য অপেক্ষা করা ----------
-    // Security Rules-এ (auth != null) প্রয়োগ থাকায়, auth.currentUser নিশ্চিত হওয়ার আগে
-    // কোনো ডেটাবেস রিড/রাইট করা হলে তা রিজেক্ট হয়ে যাবে। তাই এখানে window.mahimAuthReady
-    // প্রমিজ resolve হওয়া পর্যন্ত অপেক্ষা করা হয় (উপরের FIREBASE ANONYMOUS AUTH ব্লক দেখুন),
-    // তারপরই hydrateAndStart() কল হয় যেটা bootApp() ও attachRealtimeListeners() চালায়।
+    // ---------- INIT ----------
+    // Anonymous Auth UID এখন primary key, তাই bootApp() (এবং তার ভেতরের findOrCreateUser
+    // কলগুলো) অবশ্যই Firebase Auth রেজলভ হওয়ার পরে চলা উচিত — নাহলে UID তখনো null/undefined
+    // থাকা অবস্থায় ভুল/ফলব্যাক id দিয়ে ইউজার তৈরি হয়ে যেতে পারে। আগে এখানে কোনো wait ছাড়াই
+    // সরাসরি bootApp() কল হতো, যেটা একটা লুকানো bug ছিল।
     if (window.mahimAuthReady && typeof window.mahimAuthReady.then === 'function') {
-      window.mahimAuthReady.then(() => {
-        hydrateAndStart();
+      window.mahimAuthReady.then(function (authUser) {
+        const uid = (authUser && authUser.uid) || (window.getFirebaseUid && window.getFirebaseUid());
+        // এডমিন UID-কে এই চেক থেকে বাদ রাখা হয়, যাতে এডমিন নিজের ফোন থেকেই টেস্ট/ম্যানেজ করতে পারে
+        if (uid && uid !== 'iNEQIeSeAuPA4cdgr2iL1wW0sH83') {
+          checkOneAccountPerDevice(uid).then(function (banned) {
+            if (banned) {
+              showBannedScreen();
+            } else {
+              bootApp();
+            }
+          });
+        } else {
+          bootApp();
+        }
       });
     } else {
-      // ফলব্যাক (অস্বাভাবিক পরিস্থিতি) — তবুও অ্যাপ যেন আটকে না থাকে
-      hydrateAndStart();
+      bootApp();
     }
+
   })();
 </script>
 </body>
